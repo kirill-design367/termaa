@@ -1,0 +1,137 @@
+{
+ "forum": {
+  "id": "forum",
+  "family": "Forum",
+  "role": "display",
+  "file": "forum.woff2",
+  "variable": false,
+  "wght": [
+   400
+  ],
+  "bytes": 25884,
+  "upm": 1000,
+  "capR": 0.66,
+  "ascR": 0.856,
+  "descR": -0.248,
+  "adv": {
+   "T": 0.468,
+   "E": 0.485,
+   "R": 0.54,
+   "M": 0.777,
+   "A": 0.59
+  }
+ },
+ "tenorsans": {
+  "id": "tenorsans",
+  "family": "Tenor Sans",
+  "role": "display",
+  "file": "tenorsans.woff2",
+  "variable": false,
+  "wght": [
+   400
+  ],
+  "bytes": 18628,
+  "upm": 1000,
+  "capR": 0.7,
+  "ascR": 0.92,
+  "descR": -0.25,
+  "adv": {
+   "T": 0.667,
+   "E": 0.602,
+   "R": 0.718,
+   "M": 1.026,
+   "A": 0.732
+  }
+ },
+ "prata": {
+  "id": "prata",
+  "family": "Prata",
+  "role": "display",
+  "file": "prata.woff2",
+  "variable": false,
+  "wght": [
+   400
+  ],
+  "bytes": 19708,
+  "upm": 1000,
+  "capR": 0.8,
+  "ascR": 0.993,
+  "descR": -0.362,
+  "adv": {
+   "T": 0.7,
+   "E": 0.721,
+   "R": 0.727,
+   "M": 1.012,
+   "A": 0.719
+  }
+ },
+ "golos": {
+  "id": "golos",
+  "family": "Golos Text",
+  "role": "text",
+  "file": "golos.woff2",
+  "variable": true,
+  "wght": [
+   400,
+   900
+  ],
+  "bytes": 39568,
+  "upm": 1000,
+  "capR": 0.7,
+  "ascR": 0.98,
+  "descR": -0.22,
+  "adv": {
+   "T": 0.62,
+   "E": 0.61,
+   "R": 0.68,
+   "M": 0.86,
+   "A": 0.67
+  }
+ },
+ "onest": {
+  "id": "onest",
+  "family": "Onest",
+  "role": "text",
+  "file": "onest.woff2",
+  "variable": true,
+  "wght": [
+   100,
+   900
+  ],
+  "bytes": 33204,
+  "upm": 1000,
+  "capR": 0.707,
+  "ascR": 0.97,
+  "descR": -0.305,
+  "adv": {
+   "T": 0.569,
+   "E": 0.61,
+   "R": 0.658,
+   "M": 0.856,
+   "A": 0.67
+  }
+ },
+ "manrope": {
+  "id": "manrope",
+  "family": "Manrope",
+  "role": "text",
+  "file": "manrope.woff2",
+  "variable": true,
+  "wght": [
+   200,
+   800
+  ],
+  "bytes": 23752,
+  "upm": 2000,
+  "capR": 0.72,
+  "ascR": 1.066,
+  "descR": -0.3,
+  "adv": {
+   "T": 0.59,
+   "E": 0.56,
+   "R": 0.611,
+   "M": 0.831,
+   "A": 0.609
+  }
+ }
+}

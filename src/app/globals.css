@@ -1,0 +1,1863 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ═══════════════════════════════════════════════════════════ шрифты ═══ */
+/* Пути пишутся через basePath — см. FontFaces в layout.tsx.            */
+/* Здесь только то, что не зависит от префикса выдачи.                  */
+
+/* ═══════════════════════════════════════════════════════════ токены ═══ */
+:root {
+  /* ── Цвет. Палитра снята с присланного кадра. ───────────────────── */
+  --ink: #16130f; /* почти чёрный, тёплый          */
+  --stone-900: #221e19;
+  --stone-800: #332d26;
+  --stone-700: #4b443a;
+  --stone-600: #6a6154;
+  --stone-500: #8b8173; /* середина мира                  */
+  --stone-400: #a79d8e;
+  --stone-300: #c3baac;
+  --stone-200: #d9d2c6;
+  --stone-100: #ebe6dc;
+  --steam: #f5f2eb; /* белый пар                      */
+  --water: #121a16; /* тёмная зелёно-чёрная вода      */
+  --water-2: #1d2a23;
+  --sky: #a2b2b9; /* холодное небо                  */
+  --wood: #7c5c3e; /* тёплое дерево                  */
+  --amber: #e0a45c; /* единственный акцент            */
+  --amber-hot: #f2b463;
+
+  /* ── Роли. Переключаются темой секции, а не переписываются. ─────── */
+  --fg: var(--ink);
+  --fg-dim: var(--stone-600);
+  --fg-mute: var(--stone-500);
+  --bg: var(--stone-100);
+  --rule: color-mix(in oklab, var(--ink) 14%, transparent);
+
+  /* ── Сетка ──────────────────────────────────────────────────────── */
+  --pad: clamp(20px, 4vw, 64px);
+  --maxw: 1680px;
+  --gut: clamp(16px, 2vw, 32px);
+
+  /* ── Типографика ────────────────────────────────────────────────── */
+  --font-display: 'TERMA Display', Georgia, serif;
+  --font-text: 'TERMA Text', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --t-hero: clamp(2.4rem, 4.6vw, 5.1rem);
+  --t-h2: clamp(1.9rem, 3.6vw, 3.6rem);
+  --t-h3: clamp(1.35rem, 2vw, 2.05rem);
+  --t-num: clamp(3.2rem, 9vw, 9.5rem);
+  --t-lead: clamp(1rem, 1.05vw, 1.15rem);
+  --t-body: clamp(0.95rem, 0.95vw, 1.0625rem);
+  --t-cap: clamp(0.6875rem, 0.78vw, 0.8125rem);
+
+  /* ── Длительности и кривые. Дублируют src/lib/motion.ts. ────────── */
+  --d-xs: 180ms;
+  --d-s: 320ms;
+  --d-m: 620ms;
+  --d-l: 1200ms;
+  --d-xl: 2200ms;
+
+  --e-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --e-inout: cubic-bezier(0.65, 0, 0.35, 1);
+  --e-steam: cubic-bezier(0.33, 0, 0.15, 1);
+  --e-drop: cubic-bezier(0.55, 0.06, 0.68, 0.19);
+
+  --header-h: clamp(60px, 6.4vh, 84px);
+}
+
+/* Тёмные сцены переопределяют только роли — палитра остаётся одна.
+   Доли подобраны не на глаз: приглушённый текст в 11 px обязан давать
+   не меньше 4.5:1 на самом светлом из тёмных фонов. */
+.on-dark {
+  --fg: var(--steam);
+  --fg-dim: color-mix(in oklab, var(--steam) 80%, transparent);
+  --fg-mute: color-mix(in oklab, var(--steam) 66%, transparent);
+  --rule: color-mix(in oklab, var(--steam) 20%, transparent);
+}
+
+.on-light {
+  --fg: var(--ink);
+  --fg-dim: #4b443a;
+  --fg-mute: #5c5548;
+  --rule: color-mix(in oklab, var(--ink) 16%, transparent);
+}
+
+/* ═════════════════════════════════════════════════════════════ база ═══ */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--stone-800);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--stone-800);
+  color: var(--fg);
+  font-family: var(--font-text);
+  font-size: var(--t-body);
+  line-height: 1.55;
+  font-synthesis-weight: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: var(--amber);
+  color: var(--ink);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+.wrap {
+  width: 100%;
+  max-width: var(--maxw);
+  margin-inline: auto;
+  padding-inline: var(--pad);
+}
+
+.sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ══════════════════════════════════════════════════════ типографика ═══ */
+.eyebrow {
+  font-size: var(--t-cap);
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  font-weight: 500;
+}
+
+.h2 {
+  font-family: var(--font-display);
+  font-size: var(--t-h2);
+  line-height: 0.98;
+  letter-spacing: 0.01em;
+  font-weight: 400;
+  margin: 0;
+}
+
+.h3 {
+  font-family: var(--font-display);
+  font-size: var(--t-h3);
+  line-height: 1.06;
+  font-weight: 400;
+  margin: 0;
+}
+
+.lead {
+  font-size: var(--t-lead);
+  line-height: 1.55;
+  color: var(--fg-dim);
+  max-width: 38ch;
+  margin: 0;
+}
+
+.temp {
+  font-family: var(--font-display);
+  color: var(--amber);
+  font-variant-numeric: lining-nums tabular-nums;
+  line-height: 0.82;
+}
+
+/* ═════════════════════════════════════════════════════════════ кнопки ═ */
+.btn {
+  --btn-bg: var(--steam);
+  --btn-fg: var(--ink);
+  --btn-line: transparent;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  height: 2.95em;
+  padding-inline: 1.5em;
+  border: 1px solid var(--btn-line);
+  border-radius: 999px;
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+  font-size: var(--t-cap);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-weight: 500;
+  cursor: pointer;
+  overflow: hidden;
+  transition:
+    transform var(--d-s) var(--e-out),
+    color var(--d-s) var(--e-out),
+    border-color var(--d-s) var(--e-out);
+  will-change: transform;
+}
+
+.btn > span {
+  position: relative;
+  z-index: 1;
+}
+
+/* Заливка ховера — отдельный слой: гасим прозрачностью, а не краской. */
+.btn::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: var(--amber);
+  opacity: 0;
+  transform: scale(0.4);
+  transition:
+    opacity var(--d-s) var(--e-out),
+    transform var(--d-m) var(--e-out);
+}
+
+.btn:hover::after,
+.btn:focus-visible::after {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.btn:hover,
+.btn:focus-visible {
+  color: var(--ink);
+  border-color: var(--amber);
+}
+
+.btn:active {
+  transform: scale(0.975);
+}
+
+.btn--ghost {
+  --btn-bg: transparent;
+  --btn-fg: var(--steam);
+  --btn-line: color-mix(in oklab, var(--steam) 55%, transparent);
+}
+
+.btn--dark {
+  --btn-bg: var(--ink);
+  --btn-fg: var(--steam);
+}
+
+.btn--line {
+  --btn-bg: transparent;
+  --btn-fg: var(--fg);
+  --btn-line: var(--rule);
+}
+
+.btn--wide {
+  width: 100%;
+}
+
+/* ══════════════════════════════════════════════════════════════ шапка ═ */
+.hdr {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 60;
+  height: var(--header-h);
+  display: flex;
+  align-items: center;
+  color: var(--steam);
+  transition: color var(--d-m) var(--e-out);
+}
+
+.hdr__in {
+  display: flex;
+  align-items: center;
+  gap: var(--gut);
+  width: 100%;
+  max-width: var(--maxw);
+  margin-inline: auto;
+  padding-inline: var(--pad);
+}
+
+/* Подложка появляется, когда шапка сходит с кадра героя. */
+.hdr::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: color-mix(in oklab, var(--stone-900) 82%, transparent);
+  backdrop-filter: blur(14px);
+  opacity: 0;
+  transition: opacity var(--d-m) var(--e-out);
+}
+
+.hdr[data-stuck='1']::before {
+  opacity: 1;
+}
+
+.hdr__mark {
+  font-family: var(--font-display);
+  font-size: clamp(0.9rem, 1.05vw, 1.1rem);
+  letter-spacing: 0.42em;
+  text-indent: 0.42em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.hdr__nav {
+  display: flex;
+  gap: clamp(18px, 2vw, 38px);
+  margin-inline: auto;
+}
+
+.hdr__link {
+  position: relative;
+  font-size: var(--t-cap);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, currentColor 78%, transparent);
+  transition: color var(--d-s) var(--e-out);
+  padding-block: 0.4em;
+}
+
+.hdr__link::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: var(--amber);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--d-s) var(--e-out);
+}
+
+.hdr__link:hover,
+.hdr__link[aria-current='true'] {
+  color: var(--amber);
+}
+
+.hdr__link:hover::after,
+.hdr__link[aria-current='true']::after {
+  transform: scaleX(1);
+}
+
+.hdr__tel {
+  font-size: var(--t-cap);
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+  transition: color var(--d-s) var(--e-out);
+}
+
+.hdr__tel:hover {
+  color: var(--amber);
+}
+
+.hdr__right {
+  display: flex;
+  align-items: center;
+  gap: clamp(10px, 1.4vw, 24px);
+}
+
+/* Кнопка звонка живёт только на узком экране — см. медиазапрос. */
+.hdr__call {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in oklab, currentColor 45%, transparent);
+  transition: color var(--d-s) var(--e-out), border-color var(--d-s) var(--e-out);
+}
+
+.hdr__call:hover {
+  color: var(--amber);
+  border-color: var(--amber);
+}
+
+/* ═══════════════════════════════════════════════════════════════ герой ═ */
+.hero {
+  position: relative;
+  height: 100svh;
+  min-height: 560px;
+  overflow: hidden;
+  background: var(--stone-700);
+  color: var(--steam);
+}
+
+/* Слой 1 — фон. Отрицательный inset — запас под параллакс по курсору
+   (амплитуда до 12 px), чтобы у кадра не открывался край. */
+.hero__bg {
+  position: absolute;
+  inset: -1.4%;
+  will-change: transform;
+}
+
+.hero__bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 62% 58%;
+}
+
+/* Шторки: без них белый текст не сядет на светлый кадр. */
+.hero__scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--stone-900) 62%, transparent) 0%,
+      transparent 26%,
+      transparent 52%,
+      color-mix(in oklab, var(--stone-900) 30%, transparent) 78%,
+      color-mix(in oklab, var(--stone-900) 62%, transparent) 100%
+    ),
+    linear-gradient(
+      to right,
+      color-mix(in oklab, var(--ink) 46%, transparent) 0%,
+      transparent 46%
+    );
+}
+
+/* Слой 2 — вордмарк. */
+.wm {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-inline: clamp(10px, 1.4vw, 26px);
+  font-family: var(--font-display);
+  font-weight: 400;
+  line-height: 1;
+  color: var(--steam);
+  pointer-events: none;
+  user-select: none;
+  /* Кегль вписывается и в высоту (22vh на литеру), и в ширину экрана.  */
+  font-size: min(
+    calc(22svh / var(--wm-cap)),
+    calc((100vw - 2 * clamp(10px, 1.4vw, 26px)) / var(--wm-sum) * 0.94)
+  );
+  /* Обрезка нижней кромкой вьюпорта — ровно на треть высоты литеры.    */
+  bottom: calc(var(--wm-drop) * -1 * min(
+    calc(22svh / var(--wm-cap)),
+    calc((100vw - 2 * clamp(10px, 1.4vw, 26px)) / var(--wm-sum) * 0.94)
+  ));
+}
+
+.wm span {
+  display: block;
+  will-change: transform;
+}
+
+/* Слой 3 — пар. Лежит НАД вордмарком, поэтому слово уходит в него. */
+.steam {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
+  height: min(62svh, 620px);
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.steam__l {
+  position: absolute;
+  left: -6%;
+  bottom: -4%;
+  width: 112%;
+  height: auto;
+  will-change: transform, opacity;
+  transform-origin: 50% 100%;
+}
+
+/* Прочистка под курсором: из плотных тиров вычитается мягкий круг.
+   Радиус и центр — CSS-переменные, их пишет один quickSetter в rAF.
+   Ни одного анимируемого фильтра: круг заранее описан градиентом.    */
+.steam__l--cut {
+  --hx: 50%;
+  --hy: 50%;
+  --hr: 0px;
+  -webkit-mask-image: linear-gradient(#000, #000),
+    radial-gradient(
+      circle var(--hr) at var(--hx) var(--hy),
+      #000 0%,
+      rgba(0, 0, 0, 0.86) 42%,
+      rgba(0, 0, 0, 0.34) 68%,
+      transparent 100%
+    );
+  -webkit-mask-composite: source-out;
+  mask-image: linear-gradient(#000, #000),
+    radial-gradient(
+      circle var(--hr) at var(--hx) var(--hy),
+      #000 0%,
+      rgba(0, 0, 0, 0.86) 42%,
+      rgba(0, 0, 0, 0.34) 68%,
+      transparent 100%
+    );
+  mask-composite: subtract;
+}
+
+/* Слой 4 — текст героя. */
+.hero__copy {
+  position: absolute;
+  z-index: 4;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-58%);
+}
+
+.hero__grid {
+  width: 100%;
+  max-width: var(--maxw);
+  margin-inline: auto;
+  padding-inline: var(--pad);
+}
+
+.hero h1 {
+  font-family: var(--font-display);
+  font-size: var(--t-hero);
+  line-height: 0.94;
+  letter-spacing: 0.005em;
+  font-weight: 400;
+  margin: 0 0 clamp(18px, 2vh, 30px);
+  max-width: 13ch;
+}
+
+.hero h1 .ln {
+  display: block;
+  overflow: hidden;
+}
+
+.hero h1 .ln > span {
+  display: block;
+  will-change: transform;
+}
+
+.hero__lead {
+  font-size: var(--t-lead);
+  line-height: 1.5;
+  color: color-mix(in oklab, var(--steam) 82%, transparent);
+  max-width: 30ch;
+  margin: 0 0 clamp(22px, 3vh, 38px);
+}
+
+.hero__acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* Тонкая подсказка «листайте». */
+.hero__hint {
+  position: absolute;
+  z-index: 4;
+  right: var(--pad);
+  bottom: calc(12svh);
+  writing-mode: vertical-rl;
+  font-size: var(--t-cap);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--steam) 55%, transparent);
+}
+
+/* ══════════════════════════════════════════════════ плавающая кнопка ═ */
+.fab {
+  position: fixed;
+  z-index: 55;
+  right: var(--pad);
+  bottom: clamp(18px, 3vh, 34px);
+  opacity: 0;
+  transform: translateY(14px);
+  pointer-events: none;
+  transition:
+    opacity var(--d-m) var(--e-out),
+    transform var(--d-m) var(--e-out);
+}
+
+.fab[data-on='1'] {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+/* ═════════════════════════════════════════════════════════════ секции ═ */
+.sec {
+  position: relative;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+.sec__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gut);
+  padding-block: clamp(56px, 8vh, 120px) clamp(24px, 4vh, 52px);
+  border-bottom: 1px solid var(--rule);
+}
+
+/* ── Блок 1. Комплекс ─────────────────────────────────────────────── */
+.zones {
+  --bg: var(--stone-900);
+  height: 100svh;
+  overflow: hidden;
+}
+
+.zone {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+  background: var(--stone-900);
+}
+
+/* Кадр держится сам: линия сверху, имя и температура на общей базовой
+   линии, описание внизу. Пустоты в середине экрана нет. */
+.zone__in {
+  height: 100%;
+  width: 100%;
+  max-width: var(--maxw);
+  margin-inline: auto;
+  padding: calc(var(--header-h) + clamp(14px, 3vh, 40px)) var(--pad)
+    clamp(64px, 11vh, 130px);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: clamp(20px, 4vh, 48px);
+}
+
+.zone__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gut);
+  padding-bottom: clamp(12px, 2vh, 22px);
+  border-bottom: 1px solid var(--rule);
+}
+
+.zone__count {
+  margin: 0;
+  font-size: var(--t-cap);
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Температура — событие кадра: огромная цифра держит середину экрана,
+   имя зоны садится на неё снизу слева. Пустоты между линиями нет. */
+.zone__mid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--gut);
+  align-self: stretch;
+}
+
+.zone__name {
+  font-family: var(--font-display);
+  font-size: clamp(2.1rem, 6.2vw, 6.4rem);
+  line-height: 0.9;
+  letter-spacing: 0.005em;
+  margin: 0;
+  max-width: 11ch;
+  align-self: end;
+}
+
+.zone__bottom {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: var(--gut);
+  padding-top: clamp(14px, 2.4vh, 26px);
+  border-top: 1px solid var(--rule);
+}
+
+.zone__note {
+  font-size: var(--t-lead);
+  color: var(--fg-dim);
+  margin: 0;
+  max-width: 30ch;
+}
+
+.zone__detail {
+  font-size: var(--t-body);
+  color: var(--fg-mute);
+  margin: 0;
+  max-width: 46ch;
+}
+
+.zone__temp {
+  font-size: clamp(5rem, 18vw, 18rem);
+  white-space: nowrap;
+  margin: 0;
+  align-self: center;
+  line-height: 0.78;
+}
+
+.zone__temp sup {
+  font-size: 0.3em;
+  vertical-align: super;
+  margin-left: 0.04em;
+}
+
+/* Дверной проём — тёмная вертикальная полоса между зонами. */
+.door {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 26vw;
+  z-index: 5;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--ink) 22%,
+    var(--ink) 78%,
+    transparent
+  );
+  transform: translateX(-130%);
+  will-change: transform;
+  pointer-events: none;
+}
+
+.zones__idx {
+  position: absolute;
+  z-index: 6;
+  left: var(--pad);
+  bottom: clamp(24px, 5vh, 56px);
+  display: flex;
+  gap: 10px;
+}
+
+.zones__idx i {
+  display: block;
+  width: 26px;
+  height: 2px;
+  background: color-mix(in oklab, var(--steam) 22%, transparent);
+  transform-origin: left;
+  transition: background var(--d-s) var(--e-out);
+}
+
+.zones__idx i[data-on='1'] {
+  background: var(--amber);
+}
+
+/* ── Блок 2. Визит ────────────────────────────────────────────────── */
+.visit {
+  height: 100svh;
+  overflow: hidden;
+  /* Цвет теплеет вместе с температурой — правит одна переменная. */
+  background: var(--visit-bg, var(--stone-700));
+}
+
+.visit__fog {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  will-change: opacity;
+  object-fit: cover;
+  width: 100%;
+  height: 100%;
+}
+
+.visit__steps {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+}
+
+.visit__step {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  will-change: transform, opacity;
+}
+
+.visit__in {
+  width: 100%;
+  max-width: var(--maxw);
+  margin-inline: auto;
+  padding-inline: var(--pad);
+}
+
+.visit__note {
+  font-size: var(--t-lead);
+  color: var(--fg-dim);
+  margin: 0;
+  max-width: 32ch;
+}
+
+.visit__detail {
+  font-size: var(--t-body);
+  color: var(--fg-mute);
+  margin: 0.9em 0 0;
+  max-width: 42ch;
+}
+
+.visit__n {
+  font-family: var(--font-display);
+  font-size: clamp(0.9rem, 1.1vw, 1.15rem);
+  letter-spacing: 0.3em;
+  color: var(--amber);
+  display: block;
+  margin-bottom: 1.4em;
+}
+
+.visit__name {
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 6vw, 6rem);
+  line-height: 0.94;
+  margin: 0 0 0.3em;
+}
+
+.visit__gauge {
+  position: absolute;
+  z-index: 4;
+  right: var(--pad);
+  top: calc(var(--header-h) + clamp(16px, 4vh, 48px));
+  text-align: right;
+  font-family: var(--font-display);
+  line-height: 0.85;
+}
+
+.visit__gauge b {
+  display: block;
+  font-weight: 400;
+  font-size: clamp(3.4rem, 9vw, 9rem);
+  color: var(--amber);
+  font-variant-numeric: tabular-nums;
+}
+
+.visit__gauge i {
+  display: block;
+  font-style: normal;
+  font-size: var(--t-cap);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--steam) 66%, transparent);
+  font-family: var(--font-text);
+  margin-top: 0.9em;
+}
+
+/* Капли: собираются вверху, стекают, оставляют чистую дорожку. */
+.drop {
+  position: absolute;
+  z-index: 3;
+  top: -4%;
+  width: 4px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    color-mix(in oklab, var(--steam) 22%, transparent) 30%,
+    color-mix(in oklab, var(--steam) 72%, transparent)
+  );
+  will-change: transform;
+  pointer-events: none;
+}
+
+.drop::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -3px;
+  width: 7px;
+  height: 7px;
+  margin-left: -3.5px;
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--steam) 85%, transparent);
+}
+
+/* Веник входит слева на третьем шаге. Тёмный силуэт: на тёплой
+   сцене светлый пучок расплывается в дымку и перестаёт читаться. */
+.venik {
+  position: absolute;
+  z-index: 3;
+  left: 0;
+  top: 64%;
+  width: clamp(260px, 30vw, 540px);
+  transform: translate(-120%, -46%) rotate(-14deg);
+  will-change: transform;
+  color: var(--ink);
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* ── Блок 3. Цены ─────────────────────────────────────────────────── */
+.cols {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(14px, 2.4vw, 46px);
+  align-items: end;
+  padding-block: clamp(40px, 6vh, 90px) clamp(48px, 8vh, 110px);
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(14px, 2vh, 24px);
+}
+
+.col__tube {
+  position: relative;
+  border: 1px solid var(--rule);
+  border-radius: clamp(14px, 1.4vw, 22px);
+  overflow: hidden;
+  background: color-mix(in oklab, var(--ink) 4%, transparent);
+  display: flex;
+  align-items: flex-end;
+}
+
+/* Заливка столба: холодный низ → тёплый верх. Растёт через scaleY. */
+.col__fill {
+  position: absolute;
+  inset: auto 0 0;
+  height: 100%;
+  transform: scaleY(0);
+  transform-origin: 50% 100%;
+  will-change: transform;
+  background: linear-gradient(
+    to top,
+    #16241f 0%,
+    #24413a 18%,
+    #4d5347 40%,
+    #7a6a52 62%,
+    #a67b46 82%,
+    var(--amber) 100%
+  );
+}
+
+.col__rows {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  padding: clamp(14px, 2vw, 24px);
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 0.45em;
+}
+
+.col__rows li {
+  list-style: none;
+  font-size: var(--t-cap);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--steam);
+  opacity: 0;
+  transform: translateY(10px);
+  will-change: transform, opacity;
+}
+
+.col__cap {
+  position: absolute;
+  z-index: 2;
+  left: clamp(14px, 2vw, 24px);
+  right: clamp(14px, 2vw, 24px);
+  top: clamp(14px, 2vw, 24px);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  opacity: 0;
+  will-change: opacity;
+}
+
+.col__price {
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 2.4vw, 2.6rem);
+  line-height: 1;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.col__price em {
+  font-style: normal;
+  font-family: var(--font-text);
+  font-size: 0.52em;
+  margin-left: 0.24em;
+  color: color-mix(in oklab, var(--ink) 62%, transparent);
+}
+
+.col__name {
+  font-family: var(--font-display);
+  font-size: var(--t-h3);
+  margin: 0;
+}
+
+.col__sum {
+  font-size: var(--t-body);
+  color: var(--fg-dim);
+  margin: 0.3em 0 0;
+  min-height: 3em;
+}
+
+/* ── Блок 4. Отзывы ───────────────────────────────────────────────── */
+.revs {
+  position: relative;
+  overflow: hidden;
+  padding-block: clamp(48px, 8vh, 110px) clamp(56px, 10vh, 130px);
+}
+
+.revs__track {
+  display: flex;
+  gap: clamp(16px, 2vw, 34px);
+  padding-inline: var(--pad);
+  will-change: transform;
+}
+
+.rev {
+  flex: 0 0 auto;
+  width: clamp(268px, 27vw, 420px);
+  padding: clamp(22px, 2.4vw, 38px);
+  border-radius: clamp(16px, 1.6vw, 24px);
+  background: color-mix(in oklab, var(--ink) 30%, transparent);
+  border: 1px solid var(--rule);
+  will-change: transform;
+}
+
+.rev p {
+  margin: 0 0 1.4em;
+  font-size: var(--t-body);
+  line-height: 1.6;
+  color: var(--fg);
+}
+
+.rev footer {
+  display: flex;
+  gap: 0.6em;
+  font-size: var(--t-cap);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+}
+
+/* ── Блок 5. Вопросы ──────────────────────────────────────────────── */
+.faq {
+  padding-block: clamp(48px, 8vh, 110px) clamp(56px, 10vh, 130px);
+}
+
+/* Аккордеон не тянем во всю ширину: строка длиной в полтора метра
+   не читается, а знак раскрытия уезжает от вопроса на другой экран. */
+.faq__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.62fr) minmax(0, 1fr);
+  gap: clamp(28px, 5vw, 96px);
+  align-items: start;
+}
+
+.faq__aside .h2 {
+  margin: 0.35em 0 0.6em;
+}
+
+.faq__aside .lead {
+  max-width: 30ch;
+}
+
+.faq__item {
+  border-top: 1px solid var(--rule);
+}
+
+.faq__item:last-child {
+  border-bottom: 1px solid var(--rule);
+}
+
+.faq__q {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gut);
+  width: 100%;
+  padding-block: clamp(18px, 2.6vh, 34px);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-display);
+  font-size: clamp(1.15rem, 2.2vw, 2rem);
+  line-height: 1.1;
+  color: var(--fg);
+  transition: color var(--d-s) var(--e-out);
+}
+
+.faq__q:hover {
+  color: var(--amber);
+}
+
+.faq__sign {
+  position: relative;
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+}
+
+.faq__sign::before,
+.faq__sign::after {
+  content: '';
+  position: absolute;
+  inset: 50% 0 auto;
+  height: 1px;
+  background: currentColor;
+  transition: transform var(--d-m) var(--e-out);
+}
+
+.faq__sign::after {
+  transform: rotate(90deg);
+}
+
+.faq__q[aria-expanded='true'] .faq__sign::after {
+  transform: rotate(0deg);
+}
+
+/* Содержимое всегда в разметке: прячем высотой, не условным рендером. */
+.faq__wrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--d-m) var(--e-inout);
+}
+
+.faq__q[aria-expanded='true'] + .faq__wrap {
+  grid-template-rows: 1fr;
+}
+
+.faq__inner {
+  overflow: hidden;
+}
+
+.faq__a {
+  position: relative;
+  max-width: 62ch;
+  padding-bottom: clamp(18px, 2.6vh, 34px);
+  color: var(--fg-dim);
+  font-size: var(--t-body);
+}
+
+/* Ответ проступает сквозь конденсат: запотевание гаснет прозрачностью. */
+.faq__mist {
+  position: absolute;
+  inset: -14px -18px;
+  pointer-events: none;
+  object-fit: cover;
+  width: calc(100% + 36px);
+  height: calc(100% + 28px);
+  opacity: 1;
+  transition: opacity 500ms var(--e-steam);
+  will-change: opacity;
+}
+
+.faq__q[aria-expanded='true'] + .faq__wrap .faq__mist {
+  opacity: 0;
+}
+
+.faq__a > span {
+  display: block;
+  opacity: 0;
+  transform: translateY(6px);
+  transition:
+    opacity 500ms var(--e-steam) 90ms,
+    transform 500ms var(--e-steam) 90ms;
+}
+
+.faq__q[aria-expanded='true'] + .faq__wrap .faq__a > span {
+  opacity: 1;
+  transform: none;
+}
+
+/* ── Блок 6. Как добраться ────────────────────────────────────────── */
+.route {
+  padding-block: clamp(48px, 8vh, 110px) clamp(56px, 10vh, 130px);
+}
+
+.route__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: clamp(24px, 4vw, 72px);
+  align-items: start;
+}
+
+.route__map {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.route__line {
+  fill: none;
+  stroke: var(--fg);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+}
+
+.route__dot {
+  fill: var(--bg);
+  stroke: var(--fg);
+  stroke-width: 1.4;
+}
+
+.route__dot--end {
+  fill: var(--amber);
+  stroke: var(--amber);
+}
+
+.route__label {
+  font-family: var(--font-text);
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  fill: var(--fg-dim);
+}
+
+.route__facts {
+  display: grid;
+  gap: clamp(16px, 2.4vh, 30px);
+}
+
+.route__fact dt {
+  font-size: var(--t-cap);
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  margin-bottom: 0.5em;
+}
+
+.route__fact dd {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--t-h3);
+  line-height: 1.18;
+}
+
+/* ── Блок 7. Запись ───────────────────────────────────────────────── */
+.book {
+  position: relative;
+  overflow: hidden;
+  padding-block: clamp(56px, 9vh, 130px) clamp(64px, 11vh, 150px);
+}
+
+.book__glass {
+  position: relative;
+  z-index: 2;
+  max-width: 940px;
+  margin-inline: auto;
+  padding: clamp(24px, 3.4vw, 56px);
+  border-radius: clamp(18px, 2vw, 30px);
+  border: 1px solid var(--rule);
+  background: color-mix(in oklab, var(--steam) 9%, transparent);
+  overflow: hidden;
+}
+
+.book__mist {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.book__form {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: clamp(12px, 1.4vw, 20px);
+}
+
+.fld {
+  position: relative;
+  grid-column: span 3;
+}
+
+.fld--sm {
+  grid-column: span 2;
+}
+
+.fld--full {
+  grid-column: 1 / -1;
+}
+
+.fld__lab {
+  display: block;
+  font-size: var(--t-cap);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  margin-bottom: 0.7em;
+}
+
+/* Поле — прочищенная дорожка в конденсате: чистый фон, запотевание вокруг. */
+.fld__in {
+  width: 100%;
+  height: 3.2em;
+  padding-inline: 1.1em;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--steam) 12%, transparent);
+  color: var(--fg);
+  transition:
+    border-color var(--d-s) var(--e-out),
+    background var(--d-s) var(--e-out);
+  appearance: none;
+}
+
+.fld__in::placeholder {
+  color: var(--fg-mute);
+}
+
+.fld__in:hover,
+.fld__in:focus {
+  background: color-mix(in oklab, var(--steam) 20%, transparent);
+  border-color: color-mix(in oklab, var(--steam) 40%, transparent);
+}
+
+/* Мягкая валидация: подсветка, без красных крестов. */
+.fld[data-miss='1'] .fld__in {
+  border-color: var(--amber);
+  background: color-mix(in oklab, var(--amber) 12%, transparent);
+}
+
+.fld[data-miss='1'] .fld__lab {
+  color: var(--amber);
+}
+
+.book__done {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding-block: clamp(20px, 5vh, 60px);
+}
+
+.book__done b {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(1.8rem, 3.4vw, 3rem);
+  margin-bottom: 0.4em;
+}
+
+/* ═════════════════════════════════════════════════════════════ подвал ═ */
+.foot {
+  border-top: 1px solid var(--rule);
+  padding-block: clamp(28px, 4vh, 48px);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gut);
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--t-cap);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+}
+
+/* ══════════════════════════════════════════ фон и тема каждой сцены ═══ */
+.prices {
+  --bg: var(--stone-200);
+}
+
+.revs {
+  --bg: var(--stone-700);
+}
+
+.faq {
+  --bg: var(--stone-100);
+}
+
+.route {
+  --bg: var(--steam);
+}
+
+.book {
+  --bg: var(--water);
+}
+
+/* ═══════════════════════════════════════ стартовые позиции для входа ═══ */
+/* Задаются в CSS, а не в JS: иначе кадр успевает мигнуть до старта GSAP. */
+.hero__veil {
+  position: absolute;
+  inset: 0;
+  background: var(--stone-900);
+  will-change: opacity;
+}
+
+/* Скрыты только в живом герое — витрина /fonts показывает кадр как есть. */
+.js-in {
+  opacity: 0;
+}
+
+.hero:not(.still) .wm span,
+.hero:not(.still) h1 .ln > span {
+  transform: translateY(112%);
+}
+
+.hero:not(.still) .steam__l,
+.hero:not(.still) .hero__hint {
+  opacity: 0;
+}
+
+/* Без JS сайт обязан остаться работоспособным. */
+.no-js .js-in,
+.no-js .steam__l,
+.no-js .hero__hint {
+  opacity: 1;
+}
+
+.no-js .wm span,
+.no-js .hero h1 .ln > span {
+  transform: none;
+}
+
+.no-js .hero__veil {
+  display: none;
+}
+
+/* ═══════════════════════════════════════════════════ витрина /fonts ═══ */
+.specimens {
+  --bg: var(--stone-100);
+  background: var(--bg);
+  color: var(--fg);
+  padding-block: clamp(40px, 7vh, 96px) clamp(56px, 10vh, 140px);
+}
+
+.spec {
+  padding-block: clamp(32px, 6vh, 80px) 0;
+  border-top: 1px solid var(--rule);
+  margin-top: clamp(40px, 7vh, 96px);
+}
+
+.spec:first-of-type {
+  border-top: 0;
+  margin-top: 0;
+}
+
+.spec__facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: clamp(14px, 2vw, 28px);
+  margin: clamp(18px, 3vh, 34px) 0 clamp(28px, 5vh, 56px);
+}
+
+.spec__facts dt {
+  font-size: var(--t-cap);
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  margin-bottom: 0.6em;
+}
+
+.spec__facts dd {
+  margin: 0;
+  color: var(--fg-dim);
+  font-size: var(--t-body);
+}
+
+.spec__facts a {
+  border-bottom: 1px solid var(--rule);
+}
+
+.still {
+  height: 100svh;
+  min-height: 520px;
+}
+
+.still__tag {
+  position: absolute;
+  z-index: 6;
+  left: var(--pad);
+  bottom: calc(28svh);
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: var(--t-cap);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--steam) 70%, transparent);
+}
+
+.spec__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: clamp(24px, 4vw, 72px);
+  padding-block: clamp(32px, 5vh, 64px);
+}
+
+.spec__why {
+  margin: 0;
+  font-size: var(--t-lead);
+  line-height: 1.65;
+  color: var(--fg-dim);
+  max-width: 56ch;
+}
+
+.spec__alpha {
+  margin: 0.7em 0 0;
+  font-size: clamp(1.1rem, 2vw, 1.7rem);
+  letter-spacing: 0.06em;
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.spec__big {
+  margin: 0.35em 0 0;
+  font-size: clamp(2.4rem, 6vw, 5rem);
+  line-height: 1;
+}
+
+.spec__sizes {
+  margin-top: 1.4em;
+  display: grid;
+  gap: 0.9em;
+  color: var(--fg-dim);
+}
+
+.spec__sizes p {
+  margin: 0;
+}
+
+.spec__metrics {
+  margin: 2em 0 0;
+  padding-top: 1.2em;
+  border-top: 1px solid var(--rule);
+  font-size: var(--t-cap);
+  letter-spacing: 0.1em;
+  color: var(--fg-mute);
+  font-variant-numeric: tabular-nums;
+}
+
+.spec__note {
+  max-width: 70ch;
+  margin: clamp(40px, 7vh, 96px) 0 0;
+  padding-top: clamp(20px, 3vh, 34px);
+  border-top: 1px solid var(--rule);
+  color: var(--fg-dim);
+}
+
+@media (max-width: 860px) {
+  .spec__body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .still__tag {
+    display: none;
+  }
+}
+
+/* ─────────────────────────────────────────── блок 2: тон, капли, веник ── */
+.visit__tones {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+/* Тон сцены меняется перекрёстным гашением готовых полотен,
+   а не анимацией background-color: краска по всему экрану
+   каждый кадр — это перерисовка, которой здесь быть не должно. */
+.visit__tone {
+  position: absolute;
+  inset: 0;
+  will-change: opacity;
+}
+
+.visit__drops {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.dropwrap {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 10px;
+  margin-left: -5px;
+}
+
+/* Чистая дорожка за каплей: полоса базового тона поверх запотевания. */
+.drop-track {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 14px;
+  height: 100%;
+  margin-left: -7px;
+  transform-origin: 50% 0%;
+  will-change: transform, opacity;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    color-mix(in oklab, var(--ink) 26%, transparent) 34%,
+    color-mix(in oklab, var(--ink) 42%, transparent)
+  );
+  border-radius: 999px;
+}
+
+.visit__cta {
+  position: absolute;
+  z-index: 6;
+  left: var(--pad);
+  bottom: clamp(18px, 3vh, 34px);
+}
+
+.visit__step .zone__in {
+  padding-block: 0;
+}
+
+/* ────────────────────────────────────────────────── блок 3: столбы ───── */
+/* Блок должен целиком помещаться в экран вместе с заголовком —
+   иначе цена в вершине столба не попадает в кадр. */
+.col__tube {
+  height: calc(var(--h, 1) * clamp(260px, 43vh, 470px));
+}
+
+/* ────────────────────────────────────────────── блок 4: полоса карточек ─ */
+.revs__track {
+  margin-top: clamp(22px, 3.4vh, 44px);
+}
+
+/* ══════════════════════════════════════════════════════════ мобильная ═ */
+@media (max-width: 860px) {
+  .hdr__nav {
+    display: none;
+  }
+
+  /* Номер целиком не влезает, но связь с комплексом обрывать нельзя:
+     остаётся круглая кнопка звонка рядом с записью. */
+  .hdr__tel {
+    display: none;
+  }
+
+  .hdr__call {
+    display: inline-flex;
+  }
+
+  .hdr__right {
+    margin-left: auto;
+  }
+
+  .hero__copy {
+    top: auto;
+    bottom: 26svh;
+    transform: none;
+  }
+
+  /* Заголовок обязан лечь в две строки — как в макете. */
+  .hero h1 {
+    max-width: none;
+    font-size: min(8.9vw, 2.5rem);
+  }
+
+  .hero h1 .ln {
+    white-space: nowrap;
+  }
+
+  .hero__lead {
+    max-width: 26ch;
+  }
+
+  /* На мобильной вордмарк вписан по ширине — 22svh не влезли бы
+     физически: пять литер в широком наборе шире экрана.            */
+  .wm {
+    font-size: min(
+      calc(13svh / var(--wm-cap)),
+      calc((100vw - 2 * 10px) / var(--wm-sum) * 0.96)
+    );
+    bottom: calc(var(--wm-drop) * -1 * min(
+      calc(13svh / var(--wm-cap)),
+      calc((100vw - 2 * 10px) / var(--wm-sum) * 0.96)
+    ));
+    padding-inline: 10px;
+  }
+
+  /* Полоса пара рассчитана на 1920 — на 390 её надо увеличить,
+     иначе от клубов остаётся ровная серая кайма. */
+  .steam {
+    height: min(52svh, 460px);
+  }
+
+  .steam__l {
+    left: -90%;
+    width: 280%;
+  }
+
+  .zone__in {
+    padding-bottom: clamp(76px, 13vh, 120px);
+    gap: clamp(16px, 3vh, 32px);
+  }
+
+  .zone__mid {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: clamp(6px, 1.4vh, 14px);
+  }
+
+  .zone__temp {
+    order: -1;
+    font-size: clamp(3.4rem, 22vw, 5.6rem);
+  }
+
+  .zone__bottom {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.8em;
+  }
+
+  .faq__grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: clamp(22px, 4vh, 40px);
+  }
+
+  .cols {
+    grid-template-columns: minmax(0, 1fr);
+    gap: clamp(28px, 5vh, 44px);
+  }
+
+  .col__tube {
+    height: clamp(220px, 34svh, 340px);
+  }
+
+  .route__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .fld,
+  .fld--sm {
+    grid-column: 1 / -1;
+  }
+
+  .visit__gauge b {
+    font-size: clamp(2.8rem, 16vw, 5rem);
+  }
+
+  .rev {
+    width: min(78vw, 340px);
+  }
+}
+
+/* ══════════════════════════════════════════ уважение к настройке ОС ═══ */
+/*
+ * Параллакс и пар отключаются, входы становятся мгновенными,
+ * сайт остаётся полностью работоспособным. Конечные состояния
+ * задаются здесь, а не в JS: скрипт в этом режиме просто не стартует.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+
+  .steam__l--cut {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
+  .visit__drops,
+  .venik,
+  .hero__veil,
+  .door {
+    display: none;
+  }
+
+  /* Герой: всё на своих местах сразу. */
+  .js-in,
+  .hero:not(.still) .steam__l,
+  .hero:not(.still) .hero__hint {
+    opacity: 1;
+  }
+
+  .hero:not(.still) .wm span,
+  .hero:not(.still) h1 .ln > span {
+    transform: none;
+  }
+
+  /* Пин-секции разворачиваются в обычный поток. */
+  .zones,
+  .visit {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .zone,
+  .visit__step {
+    position: relative;
+    inset: auto;
+    opacity: 1;
+    transform: none;
+    visibility: visible;
+    padding-block: clamp(48px, 9vh, 110px);
+  }
+
+  .zone + .zone {
+    border-top: 1px solid var(--rule);
+  }
+
+  .visit {
+    background: #6d6154;
+  }
+
+  .visit__tone:not(:nth-child(3)) {
+    opacity: 0;
+  }
+
+  .visit__gauge,
+  .visit__cta {
+    position: static;
+    text-align: left;
+    margin: 0 var(--pad) clamp(20px, 4vh, 40px);
+  }
+
+  .visit__fog {
+    opacity: 0.4;
+  }
+
+  /* Столбы налиты, состав виден, цена на месте. */
+  .col__fill {
+    transform: scaleY(1);
+  }
+
+  .col__rows li,
+  .col__cap {
+    opacity: 1;
+    transform: none;
+  }
+
+  .route__line {
+    stroke-dashoffset: 0 !important;
+  }
+
+  .revs__track {
+    flex-wrap: wrap;
+  }
+}
