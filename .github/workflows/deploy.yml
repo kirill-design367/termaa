@@ -65,13 +65,16 @@ jobs:
         with:
           path: out
 
-  # Окружение github-pages пускает деплой только с ветки по умолчанию.
-  # Сравниваем с ней, а не с именем ветки: так деплой едет за тем, что
-  # сейчас является дефолтом, и вторая ветка собирается зелёной, но
-  # не пытается выложиться и не красит прогон.
+  # Окружение github-pages пускает деплой только с веток, перечисленных
+  # в его правиле «разрешённые ветки». Правило создаётся один раз при
+  # включении Pages и сменой ветки по умолчанию не переписывается,
+  # поэтому здесь список, а не сравнение с дефолтом: пока владелец не
+  # добавит main в настройках окружения, выкладку тянет старая ветка.
   deploy:
     needs: build
-    if: github.ref_name == github.event.repository.default_branch
+    if: >-
+      github.ref_name == github.event.repository.default_branch ||
+      github.ref_name == 'claude/terma-premium-resort-1l96x2'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
