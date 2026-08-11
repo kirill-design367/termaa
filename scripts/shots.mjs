@@ -24,7 +24,7 @@ const STOPS = [
   { id: '6-vizit', sel: '#vizit', extra: 2.35 },
   { id: '7-vizit', sel: '#vizit', extra: 3.2 },
   { id: '8-tseny', sel: '#tseny', extra: 0.3 },
-  { id: '9-otzyvy', sel: '.revs', extra: 0.45 },
+  { id: '9-otzyvy', sel: '.revs', extra: 0.12 },
   { id: '10-voprosy', sel: '.faq', extra: 0.16 },
   { id: '11-kontakty', sel: '#kontakty', extra: 0.24 },
   { id: '12-zapis', sel: '#zapis', extra: 0.18 },

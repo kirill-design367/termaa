@@ -301,13 +301,20 @@ img {
   padding-inline: var(--pad);
 }
 
-/* Подложка появляется, когда шапка сходит с кадра героя. */
+/* Подложка появляется, когда шапка сходит с кадра героя.
+   Без backdrop-filter: живой фильтр во всю ширину экрана остаётся
+   в кадре в покое, а по правилу №4 фильтров в покое быть не должно.
+   Плотная плашка с растушёванным низом делает ту же работу даром. */
 .hdr::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: color-mix(in oklab, var(--stone-900) 82%, transparent);
-  backdrop-filter: blur(14px);
+  background: linear-gradient(
+    to bottom,
+    var(--stone-900) 0%,
+    var(--stone-900) 62%,
+    color-mix(in oklab, var(--stone-900) 0%, transparent) 100%
+  );
   opacity: 0;
   transition: opacity var(--d-m) var(--e-out);
 }
