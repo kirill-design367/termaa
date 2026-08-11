@@ -37,7 +37,12 @@ jobs:
       - name: Disable Jekyll
         run: touch out/.nojekyll
 
+      # enablement включает Pages на репозитории, если они ещё не включены,
+      # и переводит источник на GitHub Actions.
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: out
