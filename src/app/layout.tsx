@@ -44,13 +44,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           href={A(`/fonts/${DEFAULT_PAIR.display}.woff2`)}
           crossOrigin="anonymous"
         />
-        <link
-          rel="preload"
-          as="font"
-          type="font/woff2"
-          href={A(`/fonts/${DEFAULT_PAIR.text}.woff2`)}
-          crossOrigin="anonymous"
-        />
         {/* Кадр героя — это LCP. Браузер должен узнать о нём из <head>,
             а не после разбора компонента. */}
         <link

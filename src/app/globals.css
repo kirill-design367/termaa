@@ -40,8 +40,10 @@
   --gut: clamp(16px, 2vw, 32px);
 
   /* ── Типографика ────────────────────────────────────────────────── */
-  --font-display: 'TERMA Display', Georgia, serif;
-  --font-text: 'TERMA Text', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Golos Text', system-ui, sans-serif;
+  --font-text: 'Golos Text', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* Акциденция здесь — не другая гарнитура, а другой вес. */
+  --display-w: 900;
 
   --t-hero: clamp(2.4rem, 4.6vw, 5.1rem);
   --t-h2: clamp(1.9rem, 3.6vw, 3.6rem);
@@ -164,18 +166,18 @@ img {
 
 .h2 {
   font-family: var(--font-display);
+  font-weight: var(--display-w);
   font-size: var(--t-h2);
   line-height: 0.98;
   letter-spacing: 0.01em;
-  font-weight: 400;
   margin: 0;
 }
 
 .h3 {
   font-family: var(--font-display);
+  font-weight: var(--display-w);
   font-size: var(--t-h3);
   line-height: 1.06;
-  font-weight: 400;
   margin: 0;
 }
 
@@ -189,6 +191,7 @@ img {
 
 .temp {
   font-family: var(--font-display);
+  font-weight: var(--display-w);
   color: var(--amber);
   font-variant-numeric: lining-nums tabular-nums;
   line-height: 0.82;
@@ -325,6 +328,7 @@ img {
 
 .hdr__mark {
   font-family: var(--font-display);
+  font-weight: var(--display-w);
   font-size: clamp(0.9rem, 1.05vw, 1.1rem);
   letter-spacing: 0.42em;
   text-indent: 0.42em;
@@ -462,7 +466,7 @@ img {
   align-items: baseline;
   padding-inline: clamp(10px, 1.4vw, 26px);
   font-family: var(--font-display);
-  font-weight: 400;
+  font-weight: var(--display-w);
   line-height: 1;
   color: var(--steam);
   pointer-events: none;
@@ -552,10 +556,10 @@ img {
 
 .hero h1 {
   font-family: var(--font-display);
+  font-weight: var(--display-w);
   font-size: var(--t-hero);
   line-height: 0.94;
   letter-spacing: 0.005em;
-  font-weight: 400;
   margin: 0 0 clamp(18px, 2vh, 30px);
   max-width: 13ch;
 }
@@ -691,6 +695,7 @@ img {
 
 .zone__name {
   font-family: var(--font-display);
+  font-weight: var(--display-w);
   font-size: clamp(2.1rem, 6.2vw, 6.4rem);
   line-height: 0.9;
   letter-spacing: 0.005em;
@@ -831,6 +836,7 @@ img {
 
 .visit__n {
   font-family: var(--font-display);
+  font-weight: var(--display-w);
   font-size: clamp(0.9rem, 1.1vw, 1.15rem);
   letter-spacing: 0.3em;
   color: var(--amber);
@@ -840,6 +846,7 @@ img {
 
 .visit__name {
   font-family: var(--font-display);
+  font-weight: var(--display-w);
   font-size: clamp(2.2rem, 6vw, 6rem);
   line-height: 0.94;
   margin: 0 0 0.3em;
@@ -852,12 +859,12 @@ img {
   top: calc(var(--header-h) + clamp(16px, 4vh, 48px));
   text-align: right;
   font-family: var(--font-display);
+  font-weight: var(--display-w);
   line-height: 0.85;
 }
 
 .visit__gauge b {
   display: block;
-  font-weight: 400;
   font-size: clamp(3.4rem, 9vw, 9rem);
   color: var(--amber);
   font-variant-numeric: tabular-nums;
@@ -999,6 +1006,7 @@ img {
 
 .col__price {
   font-family: var(--font-display);
+  font-weight: var(--display-w);
   font-size: clamp(1.5rem, 2.4vw, 2.6rem);
   line-height: 1;
   color: var(--ink);
@@ -1015,6 +1023,7 @@ img {
 
 .col__name {
   font-family: var(--font-display);
+  font-weight: var(--display-w);
   font-size: var(--t-h3);
   margin: 0;
 }
@@ -1366,7 +1375,6 @@ img {
 .book__done b {
   display: block;
   font-family: var(--font-display);
-  font-weight: 400;
   font-size: clamp(1.8rem, 3.4vw, 3rem);
   margin-bottom: 0.4em;
 }

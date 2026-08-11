@@ -15,5 +15,6 @@ export function pairVars(pair: Pair): CSSProperties {
     '--wm-cap': d.capR,
     '--wm-sum': wordmarkSum(d),
     '--wm-drop': wordmarkDrop(d),
+    '--display-w': pair.displayWeight,
   } as CSSProperties
 }

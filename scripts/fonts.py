@@ -26,14 +26,18 @@ UNICODES = (
     "U+2026,U+2116,U+20BD,U+0400-045F,U+0490-0491,U+2212,U+00D7"
 )
 
+# Forum, Prata и Tenor Sans выведены из проекта: арт-директор забраковал их
+# как самые заезженные «премиальные» гарнитуры русского веба.
+# До выбора новой пары Golos Text работает и текстом, и акциденцией —
+# в тяжёлом весе он держит крупный кегль честнее любой антиквы с Тильды.
 FAMILIES = [
     # id, файл, семейство CSS, роль, вес/оси
-    ("forum",     "Forum-Regular.ttf",     "Forum",      "display", None),
-    ("tenorsans", "TenorSans-Regular.ttf", "Tenor Sans", "display", None),
-    ("prata",     "Prata-Regular.ttf",     "Prata",      "display", None),
     ("golos",     "GolosText_wght.ttf",    "Golos Text", "text",    (400, 900)),
+    ("unbounded", "Unbounded_wght.ttf",    "Unbounded",  "display", (200, 900)),
+    ("geologica", "Geologica_CRSV_SHRP_slnt_wght.ttf", "Geologica", "display", (100, 900)),
     ("onest",     "Onest_wght.ttf",        "Onest",      "text",    (100, 900)),
     ("manrope",   "Manrope_wght.ttf",      "Manrope",    "text",    (200, 800)),
+    ("podkova",   "Podkova_wght.ttf",      "Podkova",    "display", (400, 800)),
 ]
 
 
