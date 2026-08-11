@@ -488,6 +488,30 @@ img {
   will-change: transform;
 }
 
+/* Объёмный пар: холст лежит на месте слоя пара и содержит внутри себя
+   и клубы, и вордмарк — глубина решается маршем, а не порядком слоёв. */
+.steamgl {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.steamgl__c {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  will-change: opacity;
+}
+
+/* Объём поднялся — испечённые полосы и разметочный вордмарк уходят.
+   Вернутся сами, если сторож погасит симуляцию по фактическому fps. */
+.hero[data-gl='1'] .steam,
+.hero[data-gl='1'] .wm {
+  opacity: 0;
+}
+
 /* Слой 3 — пар. Лежит НАД вордмарком, поэтому слово уходит в него. */
 .steam {
   position: absolute;

@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react'
 import { gsap } from '@/lib/gsap'
 import { A } from '@/lib/asset'
 import { D, E, reduced } from '@/lib/motion'
+import { SteamVolume } from './SteamVolume'
 
 /**
  * Пар героя. Три испечённых тира плотности лежат НАД вордмарком —
@@ -126,7 +127,11 @@ export function Steam() {
   }, [])
 
   return (
-    <div className="steam" ref={ref} aria-hidden="true">
+    <>
+      {/* Объёмный пар. Если он поднялся — испечённые полосы ниже гаснут
+          по метке data-gl на герое; если нет, работают они. */}
+      <SteamVolume />
+      <div className="steam" ref={ref} aria-hidden="true">
       {['steam-1', 'steam-2', 'steam-3'].map((n, i) => (
         <img
           key={n}
@@ -138,6 +143,7 @@ export function Steam() {
           decoding="async"
         />
       ))}
-    </div>
+      </div>
+    </>
   )
 }
