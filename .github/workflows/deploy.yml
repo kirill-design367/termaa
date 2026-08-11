@@ -44,10 +44,13 @@ jobs:
         run: |
           set -e
           echo "— корень выдачи:"; ls -la out | head -20
-          for f in index.html fonts/index.html .nojekyll favicon.svg; do
+          for f in index.html fonts/index.html favicon.svg; do
             test -s "out/$f" || { echo "НЕТ ИЛИ ПУСТО: out/$f"; exit 1; }
             echo "есть: out/$f ($(wc -c < "out/$f") Б)"
           done
+          # .nojekyll пустой по определению — проверяем только наличие.
+          test -f out/.nojekyll || { echo "НЕТ: out/.nojekyll"; exit 1; }
+          echo "есть: out/.nojekyll"
           grep -q '<div class="hero"' out/index.html \
             || grep -q 'class="hero' out/index.html \
             || { echo "в корневом index.html нет разметки героя"; exit 1; }
