@@ -37,6 +37,21 @@ jobs:
       - name: Disable Jekyll
         run: touch out/.nojekyll
 
+      # Корень выдачи однажды уже отдавал 404 при живом /fonts/.
+      # Проверяем состав до заливки: нет корневого index.html — падаем здесь,
+      # а не выясняем это на боевом адресе.
+      - name: Проверить состав выдачи
+        run: |
+          set -e
+          echo "— корень выдачи:"; ls -la out | head -20
+          for f in index.html fonts/index.html .nojekyll favicon.svg; do
+            test -s "out/$f" || { echo "НЕТ ИЛИ ПУСТО: out/$f"; exit 1; }
+            echo "есть: out/$f ($(wc -c < "out/$f") Б)"
+          done
+          grep -q '<div class="hero"' out/index.html \
+            || grep -q 'class="hero' out/index.html \
+            || { echo "в корневом index.html нет разметки героя"; exit 1; }
+
       # enablement включает Pages на репозитории, если они ещё не включены,
       # и переводит источник на GitHub Actions.
       - uses: actions/configure-pages@v5
@@ -61,3 +76,31 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
+      # Дым по живому адресу. Раннер в открытой сети, поэтому именно здесь
+      # видно, что реально отдаёт Pages: корень, витрина шрифтов, стиль,
+      # шрифт и кадр. Красный прогон лучше молчаливого 404 на проде.
+      - name: Дым по живому адресу
+        run: |
+          set -u
+          BASE="${{ steps.deployment.outputs.page_url }}"
+          BASE="${BASE%/}/"
+          echo "адрес: $BASE"
+          sleep 15
+          fail=0
+          check () {
+            url="$BASE$1"
+            for try in 1 2 3 4 5; do
+              code=$(curl -s -o /tmp/body -w '%{http_code}' -L "$url")
+              [ "$code" = "200" ] && break
+              sleep 8
+            done
+            size=$(wc -c < /tmp/body)
+            echo "$code  $size Б  $url"
+            [ "$code" = "200" ] || fail=1
+          }
+          check ""
+          check "fonts/"
+          check "favicon.svg"
+          grep -qi '<title>' /tmp/body 2>/dev/null || true
+          exit $fail
