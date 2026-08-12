@@ -26,7 +26,7 @@ export default function Page() {
         {/* Поток проходит сквозь всю страницу и нигде не обрывается —
             это связующее вещество, а не украшение сцены героя. */}
         <div className="flow-page" aria-hidden="true">
-          <SteamFlow dense={0.42} />
+          <SteamFlow />
         </div>
         <BlockComplex />
         <BlockVisit />

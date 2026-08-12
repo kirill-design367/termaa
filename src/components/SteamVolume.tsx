@@ -9,7 +9,7 @@ import { bakeNoise3D } from '@/lib/steam/noise3d'
 import { VERT, FLOW_FRAG, VOLUME_FRAG, BLEND_FRAG } from '@/lib/steam/shaders'
 
 /** Срез нижней кромкой. Совпадает с CROP в fonts.ts. */
-const CROP = 0.15
+const CROP = 0.08
 /** Половинное разрешение марша. */
 const SCALE = 0.5
 const FLOW_W = 320

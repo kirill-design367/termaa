@@ -16,6 +16,7 @@ export const NAV = [
 export const ZONES = [
   {
     name: 'Инфинити-бассейн',
+    img: 'zone-pool',
     temp: '38',
     note: 'Круглый год, вода над долиной',
     detail:
@@ -24,6 +25,7 @@ export const ZONES = [
   },
   {
     name: 'Русская парная',
+    img: 'zone-parnaya',
     temp: '90',
     note: 'Дровяная печь, парение по записи',
     detail:
@@ -32,6 +34,7 @@ export const ZONES = [
   },
   {
     name: 'Хамам',
+    img: 'zone-hamam',
     temp: '45',
     note: 'Влажный пар, мраморный камень',
     detail:
@@ -40,6 +43,7 @@ export const ZONES = [
   },
   {
     name: 'Купель',
+    img: 'zone-kupel',
     temp: '4',
     note: 'После парной, вода из источника',
     detail:

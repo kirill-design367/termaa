@@ -168,7 +168,7 @@ img {
   font-family: var(--font-display);
   font-weight: var(--display-w);
   font-size: var(--t-h2);
-  line-height: 0.98;
+  line-height: 1.05;
   letter-spacing: 0.01em;
   margin: 0;
 }
@@ -204,6 +204,10 @@ img {
   inset: 0;
   z-index: 1;
   pointer-events: none;
+  /* Базовая плотность полотна. Мастер-таймлайн поднимает её на стыке
+     сцен: переход делает пар, и в этот момент он заполняет кадр. */
+  opacity: 0.45;
+  will-change: opacity;
 }
 
 .flow-page .flow {
@@ -216,10 +220,11 @@ img {
   z-index: 1;
 }
 
-/* Первая сцена лежит поверх последнего экрана героя и проявляется
-   сквозь пар, а не выезжает снизу. Границы между ними физически нет. */
+/* Первая сцена начинается там, где сцена героя отработала полностью:
+   слово растворилось, текст ушёл, пар заполнил кадр. Наложения нет —
+   переход делает пар, и делает его в конце героя, а не в начале. */
 .sc-next {
-  margin-top: -100svh;
+  margin-top: 0;
 }
 
 /* ══════════════════════════════════════════════════ полотно страницы ═══
@@ -525,32 +530,47 @@ img {
   white-space: nowrap;
 }
 
+/* Меню занимает всю оставшуюся ширину шапки: вордмарк у левого поля,
+   пункты равными промежутками до правого, последний — у правого поля.
+   Промежутки большие, кегль мелкий, трекинг крупный: сжимать пункты
+   нельзя, разрядка здесь и есть признак дороговизны. */
 .hdr__nav {
+  flex: 1;
   display: flex;
-  gap: clamp(18px, 2vw, 38px);
-  margin-inline: auto;
+  justify-content: space-between;
+  align-items: center;
+  padding-left: clamp(48px, 9vw, 200px);
 }
 
 .hdr__link {
   position: relative;
   display: inline-block;
-  font-size: var(--t-cap);
-  letter-spacing: 0.2em;
+  font-size: clamp(0.625rem, 0.66vw, 0.75rem);
+  letter-spacing: 0.34em;
+  /* Трекинг вешает пустоту и справа от последней литеры. Отступ первой
+     буквы её компенсирует, иначе пункт не встаёт вплотную к полю. */
+  text-indent: 0.34em;
   text-transform: uppercase;
+  white-space: nowrap;
   color: color-mix(in oklab, currentColor 78%, transparent);
   transition: color var(--d-s) var(--e-out);
   padding-block: 0.7em;
+}
+
+/* Последний пункт стоит ровно у правого поля: висячий трекинг снимаем. */
+.hdr__nav .hdr__link:last-child {
+  margin-right: -0.34em;
 }
 
 /* Янтарного подчёркивания под ссылкой больше нет: наведение на все
    ссылки и кнопки сайта отрабатывает потёком, он описан выше. */
 
 /* ═══════════════════════════════════════════════════════════════ герой ═ */
-/* Уже не экран, а протяжённая сцена: 200svh прокрутки на липкой площадке
+/* Уже не экран, а протяжённая сцена: 260svh прокрутки на липкой площадке
    в один экран. Развитие по скроллу пишет мастер-таймлайн. */
 .hero {
   position: relative;
-  height: 200svh;
+  height: 260svh;
   color: var(--steam);
 }
 
@@ -741,7 +761,13 @@ img {
 
 .hero h1 .ln {
   display: block;
+  /* Маска нужна для выезда строки, но при межстрочном в единицу она
+     срезала выносные: у Кудряшева они длиннее области содержимого.
+     Коробку опускаем на 0.18em, раскладку возвращаем отрицательным
+     полем — стартовое смещение строки увеличено соответственно. */
   overflow: hidden;
+  padding-bottom: 0.18em;
+  margin-bottom: -0.18em;
 }
 
 .hero h1 .ln > span {
@@ -847,9 +873,36 @@ img {
   );
 }
 
+/* Кадр зоны: фотография на весь экран и затемнение под текстом. */
+.zone__img {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+.zone__img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* Кадры сняты в 16:9. На узком экране cover сам берёт центральный
+     кроп из того же файла — отдельных мобильных кадров не нужно. */
+  object-position: center;
+}
+
+.zone__scrim {
+  position: absolute;
+  inset: 0;
+  background: var(--ink);
+  opacity: 0.6;
+  pointer-events: none;
+  will-change: opacity;
+}
+
 /* Кадр держится сам: линия сверху, имя и температура на общей базовой
    линии, описание внизу. Пустоты в середине экрана нет. */
 .zone__in {
+  position: relative;
+  z-index: 1;
   height: 100%;
   width: 100%;
   max-width: var(--maxw);
@@ -893,7 +946,9 @@ img {
   font-family: var(--font-display);
   font-weight: var(--display-w);
   font-size: clamp(2.1rem, 6.2vw, 6.4rem);
-  line-height: 0.9;
+  /* 0.9 давал наезд выносных первой строки на вторую: у «Инфинити-
+     бассейн» на 12.8 px при кегле 102. Замерено, а не на глаз. */
+  line-height: 1.06;
   letter-spacing: 0.005em;
   margin: 0;
   max-width: 11ch;
@@ -1689,7 +1744,7 @@ img {
 
 .hero:not(.still) .wm span,
 .hero:not(.still) h1 .ln > span {
-  transform: translateY(112%);
+  transform: translateY(128%);
 }
 
 .hero.still .flow__c {

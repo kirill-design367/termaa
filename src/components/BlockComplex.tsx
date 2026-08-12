@@ -1,9 +1,14 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { gsap, ScrollTrigger } from '@/lib/gsap'
+import { gsap } from '@/lib/gsap'
+import { A } from '@/lib/asset'
 import { ZONES } from '@/lib/content'
 import { E, reduced } from '@/lib/motion'
+
+/** Затемнение под текстом и то, до чего оно уходит на смене зоны. */
+const SCRIM = 0.6
+const SCRIM_OPEN = 0.45
 
 /**
  * Блок 1 — Комплекс.
@@ -23,6 +28,7 @@ export function BlockComplex() {
     const zones = q<HTMLElement>('.zone')
     const door = q<HTMLElement>('.door')[0]
     const bars = q<HTMLElement>('.zones__idx i')
+    const scrims = q<HTMLElement>('.zone__scrim')
 
     const mark = (i: number) => bars.forEach((b, n) => (b.dataset.on = n <= i ? '1' : '0'))
 
@@ -56,10 +62,26 @@ export function BlockComplex() {
         // Проём проходит быстро, смена происходит под ним.
         // Уходящая зона не гаснет — её просто накрывает следующая:
         // так две зоны не читаются одновременно дольше доли секунды.
-        tl.fromTo(door, { xPercent: -130 }, { xPercent: 130, duration: 0.62, ease: E.door }, at)
+        // x обнуляется явно. Стартовая позиция описана в CSS как
+        // translateX(-130%), и GSAP разбирает её в пиксельный x — без
+        // обнуления он ложится поверх анимации xPercent, и проём вместо
+        // прохода паркуется посреди кадра. На тёмных зонах это было не
+        // видно, на фотографии — сразу.
+        // Конец 500 %, а не 130 %: при ширине 26vw проёму нужно 485 %,
+        // чтобы уйти за правую кромку целиком.
+        tl.fromTo(
+          door,
+          { xPercent: -130, x: 0 },
+          { xPercent: 500, x: 0, duration: 0.62, ease: E.door },
+          at,
+        )
           .to(zones[i - 1], { scale: 0.9, duration: 0.6, ease: 'power2.in' }, at + 0.16)
           .to(zones[i], { autoAlpha: 1, duration: 0.14, ease: 'none' }, at + 0.24)
           .to(zones[i], { scale: 1, yPercent: 0, duration: 0.62, ease: E.out }, at + 0.24)
+          // На смене кадр открывается: затемнение уходит с 60 % до 45 %
+          // и возвращается, когда проём прошёл и текст снова читается.
+          .to(scrims, { opacity: SCRIM_OPEN, duration: 0.3, ease: 'none' }, at)
+          .to(scrims, { opacity: SCRIM, duration: 0.42, ease: 'none' }, at + 0.5)
       }
     }, el)
 
@@ -70,6 +92,31 @@ export function BlockComplex() {
     <section className="sec zones on-dark sc-next" id="kompleks" ref={root} aria-label="Комплекс">
       {ZONES.map((z, i) => (
         <article className="zone" key={z.name}>
+          {/* Кадр зоны на весь экран. На узком экране тот же файл даёт
+              центральный кроп — отдельных мобильных кадров нет. */}
+          <picture className="zone__img">
+            <source
+              type="image/avif"
+              sizes="100vw"
+              srcSet={`${A(`/img/${z.img}-1600.avif`)} 1600w, ${A(`/img/${z.img}-2400.avif`)} 2400w`}
+            />
+            <source
+              type="image/webp"
+              sizes="100vw"
+              srcSet={`${A(`/img/${z.img}-1600.webp`)} 1600w, ${A(`/img/${z.img}-2400.webp`)} 2400w`}
+            />
+            <img
+              src={A(`/img/${z.img}.jpg`)}
+              alt=""
+              width={2752}
+              height={1536}
+              decoding="async"
+              loading={i === 0 ? 'eager' : 'lazy'}
+              fetchPriority={i === 0 ? 'high' : 'low'}
+            />
+          </picture>
+          <div className="zone__scrim" aria-hidden="true" />
+
           <div className="zone__in">
             <div className="zone__top">
               <p className="eyebrow">Комплекс</p>

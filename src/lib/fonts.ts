@@ -25,9 +25,9 @@ export const METRICS = raw as unknown as Record<string, Metrics>
  *   базовая линия от низа строки (line-height: 1) = 0.5 − (asc + desc) / 2
  *   плюс отрезаемая часть литеры                  = CROP × capHeight
  */
-// Срез нижней кромкой: слово стоит увереннее, но по-прежнему очевидно
-// продолжается за кадром.
-const CROP = 0.15
+// Срез нижней кромкой: лёгкий намёк на продолжение за кадром, а не
+// потеря букв. Слово стоит почти целиком.
+const CROP = 0.08
 
 export const wordmarkDrop = (m: Metrics) =>
   +(0.5 - (m.ascR + m.descR) / 2 + CROP * m.capR).toFixed(4)

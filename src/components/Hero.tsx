@@ -38,7 +38,7 @@ export function Hero() {
     tl.fromTo(q('.hero__veil'), { opacity: 1 }, { opacity: 0, duration: D.xl, ease: 'power2.out' }, 0)
       .fromTo(q('.hero__bg'), { scale: 1.06 }, { scale: 1, duration: D.xl, ease: 'power2.out' }, 0)
       // y: 0 задаётся явно. Стартовая позиция описана в CSS как
-      // translateY(112%), и GSAP разбирает её в пиксельный y — без
+      // translateY(128%), и GSAP разбирает её в пиксельный y — без
       // обнуления он остался бы поверх анимации yPercent навсегда.
       .fromTo(
         q('.wm span'),
@@ -48,7 +48,7 @@ export function Hero() {
       )
       .fromTo(
         q('h1 .ln > span'),
-        { yPercent: 112, y: 0 },
+        { yPercent: 128, y: 0 },
         { yPercent: 0, y: 0, duration: 1.15, stagger: STAGGER.lines },
         0.55,
       )
