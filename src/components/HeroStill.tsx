@@ -1,5 +1,5 @@
 import { A } from '@/lib/asset'
-import { BRAND, HOURS, NAV, PHONE } from '@/lib/content'
+import { BRAND, HOURS, NAV } from '@/lib/content'
 import { METRICS, type Pair } from '@/lib/fonts'
 import { pairVars } from '@/lib/pairStyle'
 
@@ -48,12 +48,6 @@ export function HeroStill({ pair }: { pair: Pair }) {
               </span>
             ))}
           </nav>
-          <div className="hdr__right">
-            <span className="hdr__tel">{PHONE}</span>
-            <span className="btn">
-              <span>Записаться</span>
-            </span>
-          </div>
         </div>
       </header>
 

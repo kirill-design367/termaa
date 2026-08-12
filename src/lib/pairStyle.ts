@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react'
 import { METRICS, wordmarkDrop, wordmarkSum, type Pair } from './fonts'
+import { A } from './asset'
 
 /**
  * Переменные пары шрифтов. Их читают и типографика, и геометрия
@@ -16,5 +17,7 @@ export function pairVars(pair: Pair): CSSProperties {
     '--wm-sum': wordmarkSum(d),
     '--wm-drop': wordmarkDrop(d),
     '--display-w': pair.displayWeight,
+    // Слой потёка для наведения: адрес учитывает basePath.
+    '--drip': `url(${A('/img/drip.webp')})`,
   } as CSSProperties
 }

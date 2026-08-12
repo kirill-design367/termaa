@@ -20,6 +20,7 @@ const FLAT = [
   { src: 'steam-3.png', q: 74, w: null },
   { src: 'fog.png', q: 58, w: 1000 },
   { src: 'frost.png', q: 62, w: 720 },
+  { src: 'drip.png', q: 78, w: null },
 ]
 
 const kb = (n) => `${Math.round(n / 1024)} КБ`

@@ -1,4 +1,26 @@
 {
+ "kudryashev": {
+  "id": "kudryashev",
+  "family": "Kudryashev Display",
+  "role": "display",
+  "file": "kudryashev.woff2",
+  "variable": false,
+  "wght": [
+   400
+  ],
+  "bytes": 17904,
+  "upm": 1000,
+  "capR": 0.723,
+  "ascR": 0.77,
+  "descR": -0.23,
+  "adv": {
+   "T": 0.652,
+   "E": 0.651,
+   "R": 0.736,
+   "M": 0.985,
+   "A": 0.697
+  }
+ },
  "golos": {
   "id": "golos",
   "family": "Golos Text",

@@ -2,6 +2,7 @@ import { Header } from '@/components/Header'
 import { Hero } from '@/components/Hero'
 import { Fab } from '@/components/Fab'
 import { SmoothScroll } from '@/components/SmoothScroll'
+import { SteamVolume } from '@/components/SteamVolume'
 import { BlockComplex } from '@/components/BlockComplex'
 import { BlockVisit } from '@/components/BlockVisit'
 import { BlockPrices } from '@/components/BlockPrices'
@@ -16,8 +17,11 @@ export default function Page() {
     <>
       <SmoothScroll />
       <Header />
-      <main>
+      <main className="page">
         <Hero />
+        {/* Объём выходит ниже героя и растворяется в следующем блоке,
+            поэтому холст живёт рядом с героем, а не внутри его обрезки. */}
+        <SteamVolume />
         <BlockComplex />
         <BlockVisit />
         <BlockPrices />

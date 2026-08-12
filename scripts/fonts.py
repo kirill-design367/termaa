@@ -16,6 +16,10 @@ from fontTools.ttLib import TTFont
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SRC = os.environ.get("TERMA_TTF", "/workspace/fontlab/ttf")
+# Лицензионные исходники живут отдельно и в репозиторий не попадают:
+# публичный репозиторий — не место для полного TTF купленной гарнитуры.
+# В выдачу уходит только сабсет woff2, он и закоммичен.
+LICENSED = os.path.join(HERE, "..", "assets-src", "fonts")
 OUT = os.path.join(HERE, "..", "public", "fonts")
 DATA = os.path.join(HERE, "..", "src", "lib", "fonts.generated.json")
 
@@ -32,6 +36,7 @@ UNICODES = (
 # в тяжёлом весе он держит крупный кегль честнее любой антиквы с Тильды.
 FAMILIES = [
     # id, файл, семейство CSS, роль, вес/оси
+    ("kudryashev", "KudryashevDisplay.ttf", "Kudryashev Display", "display", None),
     ("golos",     "GolosText_wght.ttf",    "Golos Text", "text",    (400, 900)),
     ("unbounded", "Unbounded_wght.ttf",    "Unbounded",  "display", (200, 900)),
     ("geologica", "Geologica_CRSV_SHRP_slnt_wght.ttf", "Geologica", "display", (100, 900)),
@@ -73,7 +78,17 @@ def main():
     for fid, fname, family, role, axes in FAMILIES:
         src = os.path.join(SRC, fname)
         if not os.path.exists(src):
-            sys.exit(f"нет исходника: {src}")
+            src = os.path.join(LICENSED, fname)
+        if not os.path.exists(src):
+            # Лицензионного исходника нет — оставляем уже собранный сабсет.
+            dst = os.path.join(OUT, f"{fid}.woff2")
+            if os.path.exists(dst) and os.path.exists(DATA):
+                prev = json.load(open(DATA, encoding="utf-8"))
+                if fid in prev:
+                    out[fid] = prev[fid]
+                    print(f"{fid:10} исходника нет — оставлен готовый сабсет")
+                    continue
+            sys.exit(f"нет исходника: {fname}")
         dst = os.path.join(OUT, f"{fid}.woff2")
         cmd = [
             sys.executable, "-m", "fontTools.subset", src,

@@ -231,30 +231,115 @@ img {
   z-index: 1;
 }
 
-/* Заливка ховера — отдельный слой: гасим прозрачностью, а не краской. */
-.btn::after {
+/* ── Наведение: потёк по запотевшему стеклу ───────────────────────────
+   Янтарной подсветки нет нигде. Вместо неё сверху вниз проходит капля
+   неровной дорожкой и оставляет чистый след; фон чуть светлеет.
+   Слой потёка испечён на сборке, в рантайме едет только transform.  */
+.btn::before {
   content: '';
   position: absolute;
   inset: -1px;
   border-radius: inherit;
-  background: var(--amber);
+  background: #fff;
   opacity: 0;
-  transform: scale(0.4);
-  transition:
-    opacity var(--d-s) var(--e-out),
-    transform var(--d-m) var(--e-out);
+  transition: opacity var(--d-s) var(--e-out);
+}
+
+/* Дорожка потёка красится currentColor: на светлой кнопке она тёмная,
+   на тёмной и на прозрачной — светлая. Один слой, три варианта кнопки. */
+.btn::after {
+  content: '';
+  position: absolute;
+  left: -2px;
+  right: -2px;
+  top: 0;
+  height: 300%;
+  border-radius: inherit;
+  background: currentColor;
+  -webkit-mask-image: var(--drip);
+  mask-image: var(--drip);
+  -webkit-mask-size: 58px 100%;
+  mask-size: 58px 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: var(--drip-x, 34%) 0;
+  mask-position: var(--drip-x, 34%) 0;
+  opacity: 0;
+  transform: translateY(-66%);
+  pointer-events: none;
+}
+
+.btn:hover::before,
+.btn:focus-visible::before {
+  opacity: 0.22;
 }
 
 .btn:hover::after,
 .btn:focus-visible::after {
-  opacity: 1;
-  transform: scale(1);
+  animation: drip 600ms var(--e-drop) 1;
 }
 
-.btn:hover,
-.btn:focus-visible {
-  color: var(--ink);
-  border-color: var(--amber);
+/* Капля идёт сверху вниз, след за ней затягивается к концу 0.6 с. */
+@keyframes drip {
+  0% {
+    opacity: 0;
+    transform: translateY(-66%);
+  }
+  14% {
+    opacity: 0.6;
+  }
+  62% {
+    opacity: 0.45;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(0%);
+  }
+}
+
+/* Капля срывается не в одной и той же точке — иначе приём читается как
+   механика интерфейса, а не как вода. Смещение задаётся по порядку. */
+.btn:nth-of-type(2n),
+.hdr__link:nth-of-type(2n),
+.faq__q:nth-of-type(2n) {
+  --drip-x: 63%;
+}
+
+.btn:nth-of-type(3n),
+.hdr__link:nth-of-type(3n),
+.faq__q:nth-of-type(3n) {
+  --drip-x: 18%;
+}
+
+/* Ссылки навигации получают тот же приём — это фирменная механика. */
+.hdr__link::after {
+  content: '';
+  position: absolute;
+  left: -4px;
+  right: -4px;
+  top: 0;
+  height: 300%;
+  background: currentColor;
+  -webkit-mask-image: var(--drip);
+  mask-image: var(--drip);
+  -webkit-mask-size: 20px 100%;
+  mask-size: 20px 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: var(--drip-x, 34%) 0;
+  mask-position: var(--drip-x, 34%) 0;
+  opacity: 0;
+  transform: translateY(-66%);
+  pointer-events: none;
+}
+
+.hdr__link:hover::after,
+.hdr__link:focus-visible::after {
+  animation: drip 600ms var(--e-drop) 1;
+}
+
+.hdr__link:hover {
+  color: var(--steam);
 }
 
 .btn:active {
@@ -344,70 +429,21 @@ img {
 
 .hdr__link {
   position: relative;
+  display: inline-block;
+  /* Потёк обрезается коробкой ссылки — иначе он течёт по всей шапке. */
+  overflow: hidden;
   font-size: var(--t-cap);
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: color-mix(in oklab, currentColor 78%, transparent);
   transition: color var(--d-s) var(--e-out);
-  padding-block: 0.4em;
+  /* Капле нужна высота, иначе дорожка сжимается в чёрточку.
+     Шапка от этого не растёт — её высота задана --header-h. */
+  padding-block: 0.95em;
 }
 
-.hdr__link::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 1px;
-  background: var(--amber);
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform var(--d-s) var(--e-out);
-}
-
-.hdr__link:hover,
-.hdr__link[aria-current='true'] {
-  color: var(--amber);
-}
-
-.hdr__link:hover::after,
-.hdr__link[aria-current='true']::after {
-  transform: scaleX(1);
-}
-
-.hdr__tel {
-  font-size: var(--t-cap);
-  letter-spacing: 0.12em;
-  white-space: nowrap;
-  transition: color var(--d-s) var(--e-out);
-}
-
-.hdr__tel:hover {
-  color: var(--amber);
-}
-
-.hdr__right {
-  display: flex;
-  align-items: center;
-  gap: clamp(10px, 1.4vw, 24px);
-}
-
-/* Кнопка звонка живёт только на узком экране — см. медиазапрос. */
-.hdr__call {
-  display: none;
-  align-items: center;
-  justify-content: center;
-  width: 2.6rem;
-  height: 2.6rem;
-  border-radius: 999px;
-  border: 1px solid color-mix(in oklab, currentColor 45%, transparent);
-  transition: color var(--d-s) var(--e-out), border-color var(--d-s) var(--e-out);
-}
-
-.hdr__call:hover {
-  color: var(--amber);
-  border-color: var(--amber);
-}
+/* Янтарного подчёркивания под ссылкой больше нет: наведение на все
+   ссылки и кнопки сайта отрабатывает потёком, он описан выше. */
 
 /* ═══════════════════════════════════════════════════════════════ герой ═ */
 .hero {
@@ -490,9 +526,18 @@ img {
 
 /* Объёмный пар: холст лежит на месте слоя пара и содержит внутри себя
    и клубы, и вордмарк — глубина решается маршем, а не порядком слоёв. */
+.page {
+  position: relative;
+}
+
+/* Холст объёма начинается вместе с героем и заходит ниже него —
+   там пар вытекает в следующий блок и растворяется. */
 .steamgl {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100svh;
   z-index: 3;
   pointer-events: none;
 }
@@ -1130,6 +1175,8 @@ img {
 }
 
 .faq__q {
+  position: relative;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1147,8 +1194,31 @@ img {
   transition: color var(--d-s) var(--e-out);
 }
 
-.faq__q:hover {
-  color: var(--amber);
+/* Тот же фирменный потёк, что на кнопках: янтарной подсветки нет нигде. */
+.faq__q::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 300%;
+  background: currentColor;
+  -webkit-mask-image: var(--drip);
+  mask-image: var(--drip);
+  -webkit-mask-size: 52px 100%;
+  mask-size: 52px 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: var(--drip-x, 34%) 0;
+  mask-position: var(--drip-x, 34%) 0;
+  opacity: 0;
+  transform: translateY(-66%);
+  pointer-events: none;
+}
+
+.faq__q:hover::after,
+.faq__q:focus-visible::after {
+  animation: drip 600ms var(--e-drop) 1;
 }
 
 .faq__sign {
@@ -1416,6 +1486,44 @@ img {
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--fg-mute);
+}
+
+/* Телефон в подвале — тоже ссылка, значит тоже потёк. */
+.foot a {
+  position: relative;
+  display: inline-block;
+  overflow: hidden;
+  transition: color var(--d-s) var(--e-out);
+}
+
+.foot a::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 300%;
+  background: currentColor;
+  -webkit-mask-image: var(--drip);
+  mask-image: var(--drip);
+  -webkit-mask-size: 20px 100%;
+  mask-size: 20px 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: var(--drip-x, 34%) 0;
+  mask-position: var(--drip-x, 34%) 0;
+  opacity: 0;
+  transform: translateY(-66%);
+  pointer-events: none;
+}
+
+.foot a:hover::after,
+.foot a:focus-visible::after {
+  animation: drip 600ms var(--e-drop) 1;
+}
+
+.foot a:hover {
+  color: var(--steam);
 }
 
 /* ══════════════════════════════════════════ фон и тема каждой сцены ═══ */
@@ -1689,18 +1797,9 @@ img {
     display: none;
   }
 
-  /* Номер целиком не влезает, но связь с комплексом обрывать нельзя:
-     остаётся круглая кнопка звонка рядом с записью. */
+  /* Витрина /fonts показывает статичный кадр — телефон там тоже лишний. */
   .hdr__tel {
     display: none;
-  }
-
-  .hdr__call {
-    display: inline-flex;
-  }
-
-  .hdr__right {
-    margin-left: auto;
   }
 
   .hero__copy {

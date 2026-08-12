@@ -223,6 +223,50 @@ def build_condensation():
     to_png(np.clip(veil, 0, 1), (235, 230, 220), 1.4, f"{OUT}/frost.png")
 
 
+def build_drip():
+    """
+    Потёк для наведения: капля идёт по запотевшему стеклу сверху вниз
+    неровной дорожкой. Слой готовится здесь, в рантайме он только едет
+    трансформом — ни одного анимируемого фильтра.
+
+    Геометрия привязана к тому, как слой едет. Он втрое выше кнопки и
+    сдвигается с −66% до 0%, поэтому в окно кнопки по очереди попадает
+    полоса плитки — снизу вверх по самой плитке. Значит голова капли
+    лежит примерно на 0.66 высоты (в первом кадре она у верхней кромки
+    кнопки), а хвост тянется выше неё, до 0.33. Всё остальное пусто:
+    к концу 0.6 с след затягивается сам, без отдельной анимации.
+    """
+    w, h = 96, 512
+    rng = np.random.default_rng(7)
+    a = np.zeros((h, w), np.float32)
+    f = np.arange(h) / (h - 1)
+
+    HEAD, TAIL = 0.665, 0.30
+    # Дорожка одна, рядом вторая — тоньше и с отставанием: край рваный,
+    # но это по-прежнему одна капля, а не гребёнка.
+    for cx, wid, amp, freq, alpha, lag in (
+        (0.46, 11.0, 9.0, 2.4, 1.00, 0.00),
+        (0.62, 5.0, 12.0, 3.3, 0.50, 0.07),
+    ):
+        wobble = (np.sin(f * freq * 2 * np.pi + rng.uniform(0, 6)) * amp
+                  + np.sin(f * freq * 5.3 * np.pi) * amp * 0.35)
+        path = cx * w + wobble
+        # Ширина дорожки гуляет — капля то разгоняется, то тормозит.
+        wcur = wid * (0.7 + 0.3 * np.sin(f * 9.0 + rng.uniform(0, 6)))
+        d = np.abs(np.arange(w)[None, :] - path[:, None]) / wcur[:, None]
+        streak = np.clip(1.0 - d, 0, 1) ** 1.5 * alpha
+
+        head, tail = HEAD - lag, TAIL - lag
+        # Голова — короткий яркий сгусток, хвост тянется вверх и тает.
+        blob = np.exp(-(((f - head) / 0.055) ** 2))
+        trail = np.clip((f - tail) / (head - tail), 0, 1) ** 1.7
+        trail *= np.clip((head + 0.02 - f) / 0.05, 0, 1)
+        prof = np.clip(trail * 0.72 + blob, 0, 1)
+        a = 1.0 - (1.0 - a) * (1.0 - streak * prof[:, None])
+
+    to_png(np.clip(a, 0, 1), (250, 250, 248), 1.2, f"{OUT}/drip.png")
+
+
 def main():
     desk = Image.open(f"{SRC}/terma-desktop.jpg")
     mob = Image.open(f"{SRC}/terma-mobile.jpg")
@@ -238,6 +282,7 @@ def main():
 
     build_steam(desk)
     build_condensation()
+    build_drip()
     print("готово →", OUT)
 
 

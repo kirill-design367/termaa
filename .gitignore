@@ -5,3 +5,9 @@ out/
 next-env.d.ts
 .DS_Store
 .env*.local
+
+# Лицензионные исходники гарнитур не публикуем: в выдачу уходит сабсет.
+assets-src/fonts/
+
+# Кэш питона
+scripts/__pycache__/
