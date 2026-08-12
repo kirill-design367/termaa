@@ -43,8 +43,15 @@ export function Header() {
 
         <nav className="hdr__nav" aria-label="Разделы">
           {NAV.map((n) => (
-            <a className="hdr__link js-in" key={n.id} href={`#${n.id}`}>
-              {n.label}
+            <a className="hdr__link js-in" key={n.id} href={`#${n.id}`} aria-label={n.label}>
+              {/* Буквы поднимаются по одной, поэтому каждая — свой элемент.
+                  Слово целиком остаётся в aria-label, для экранного диктора
+                  ничего не рассыпается. */}
+              {n.label.split('').map((c, i) => (
+                <b key={i} aria-hidden="true" style={{ '--i': i } as React.CSSProperties}>
+                  {c === ' ' ? ' ' : c}
+                </b>
+              ))}
             </a>
           ))}
         </nav>

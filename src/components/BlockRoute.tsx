@@ -80,7 +80,7 @@ export function BlockRoute() {
   }, [map])
 
   return (
-    <section className="sec route on-light" id="kontakty" ref={root}>
+    <section className="sec route on-dark" id="kontakty" ref={root}>
       <div className="wrap">
         <header className="sec__head">
           <h2 className="h2">Как добраться</h2>

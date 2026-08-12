@@ -67,7 +67,7 @@ export function BlockComplex() {
   }, [])
 
   return (
-    <section className="sec zones on-dark" id="kompleks" ref={root} aria-label="Комплекс">
+    <section className="sec zones on-dark sc-next" id="kompleks" ref={root} aria-label="Комплекс">
       {ZONES.map((z, i) => (
         <article className="zone" key={z.name}>
           <div className="zone__in">

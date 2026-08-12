@@ -55,7 +55,7 @@ export function BlockPrices() {
   }, [])
 
   return (
-    <section className="sec prices on-light" id="tseny" ref={root}>
+    <section className="sec prices on-dark" id="tseny" ref={root}>
       <div className="wrap">
         <header className="sec__head">
           <h2 className="h2">Цены</h2>

@@ -2,7 +2,8 @@ import { Header } from '@/components/Header'
 import { Hero } from '@/components/Hero'
 import { Fab } from '@/components/Fab'
 import { SmoothScroll } from '@/components/SmoothScroll'
-import { SteamVolume } from '@/components/SteamVolume'
+import { Scene } from '@/components/Scene'
+import { SteamFlow } from '@/components/SteamFlow'
 import { BlockComplex } from '@/components/BlockComplex'
 import { BlockVisit } from '@/components/BlockVisit'
 import { BlockPrices } from '@/components/BlockPrices'
@@ -16,12 +17,17 @@ export default function Page() {
   return (
     <>
       <SmoothScroll />
+      {/* Полотно страницы: неподвижная стопка готовых состояний фона
+          и мастер-таймлайн, который их перегоняет. */}
+      <Scene />
       <Header />
       <main className="page">
         <Hero />
-        {/* Объём выходит ниже героя и растворяется в следующем блоке,
-            поэтому холст живёт рядом с героем, а не внутри его обрезки. */}
-        <SteamVolume />
+        {/* Поток проходит сквозь всю страницу и нигде не обрывается —
+            это связующее вещество, а не украшение сцены героя. */}
+        <div className="flow-page" aria-hidden="true">
+          <SteamFlow dense={0.42} />
+        </div>
         <BlockComplex />
         <BlockVisit />
         <BlockPrices />
@@ -29,20 +35,20 @@ export default function Page() {
         <BlockFaq />
         <BlockRoute />
         <BlockBooking />
+
+        <footer className="sec on-dark">
+          <div className="wrap">
+            <div className="foot">
+              <span>
+                {BRAND} · {ROUTE.address}
+              </span>
+              <span>Ежедневно {HOURS}</span>
+              <a href={PHONE_HREF}>{PHONE}</a>
+            </div>
+          </div>
+        </footer>
       </main>
       <Fab />
-
-      <footer className="sec on-dark" style={{ background: 'var(--ink)' }}>
-        <div className="wrap">
-          <div className="foot">
-            <span>
-              {BRAND} · {ROUTE.address}
-            </span>
-            <span>Ежедневно {HOURS}</span>
-            <a href={PHONE_HREF}>{PHONE}</a>
-          </div>
-        </div>
-      </footer>
     </>
   )
 }

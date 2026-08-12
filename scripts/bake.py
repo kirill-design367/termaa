@@ -205,6 +205,46 @@ def edge_weight(w, h, *, hold, power) -> np.ndarray:
     return np.clip((r - hold) / (1.0 - hold), 0, 1) ** power
 
 
+def build_plume(name: str, seed: int, n: int, r_lo: float, r_hi: float):
+    """
+    Колонна восходящего потока: отдельные клубы на прозрачном фоне.
+
+    Плитка стыкуется по вертикали — клуб, вышедший за верхний край,
+    входит снизу. Поэтому колонну можно гнать бесконечным `translateY`
+    без единого шва и без единого перезапуска цикла.
+
+    Это откат для мобильной, для `reduced-motion` и для машин, где
+    сторож снял объём: там же характер, только испечённый.
+    """
+    w, h = 512, 1024
+    rng = np.random.default_rng(seed)
+    a = np.zeros((h, w), np.float32)
+    yy = np.arange(h)[:, None]
+    xx = np.arange(w)[None, :]
+
+    for _ in range(n):
+        cx = rng.uniform(-0.08, 1.08) * w
+        cy = rng.uniform(0, h)
+        r = rng.uniform(r_lo, r_hi) * w
+        # Клуб вытянут по горизонтали и рваный: три смещённых ядра.
+        blob = np.zeros((h, w), np.float32)
+        for k in range(3):
+            ox = cx + rng.uniform(-0.45, 0.45) * r
+            oy = cy + rng.uniform(-0.30, 0.30) * r
+            rk = r * rng.uniform(0.55, 1.0)
+            dx = (xx - ox) / (rk * 1.45)
+            # Замыкание по вертикали: расстояние берётся по кольцу.
+            dy = np.abs(yy - oy)
+            dy = np.minimum(dy, h - dy) / rk
+            blob = np.maximum(blob, np.clip(1.0 - (dx * dx + dy * dy), 0, 1) ** 1.35)
+        a = 1.0 - (1.0 - a) * (1.0 - blob * rng.uniform(0.35, 0.85))
+
+    # Края колонны мягкие, чтобы соседние колонны сшивались без границы.
+    edge = np.clip(np.minimum(xx, w - 1 - xx) / (w * 0.16), 0, 1)
+    a *= edge
+    to_png(np.clip(a, 0, 1), (246, 243, 236), 5, f"{OUT}/{name}.png")
+
+
 def build_condensation():
     """Конденсат: мелкая капля по краям кадра — и матовая наледь для ответов."""
     w, h = 1280, 720
@@ -272,10 +312,13 @@ def main():
     mob = Image.open(f"{SRC}/terma-mobile.jpg")
     print("исходники:", desk.size, mob.size)
 
-    gd = grade(desk, lift_shadows=0.045, warm=(0.030, 0.008, -0.030),
-               gain=(1.00, 0.955, 0.885), gamma=1.34, sky_pull=0.30)
-    gm = grade(mob, lift_shadows=0.045, warm=(0.030, 0.008, -0.030),
-               gain=(1.00, 0.955, 0.885), gamma=1.30, sky_pull=0.34)
+    # Экспозиция поднята: gamma почти линейная вместо 1.34, усиление выше,
+    # притенение неба снято почти полностью. Горы и павильон обязаны
+    # читаться отчётливо, серой пелены в кадре нет.
+    gd = grade(desk, lift_shadows=0.022, warm=(0.026, 0.007, -0.026),
+               gain=(1.045, 1.005, 0.940), gamma=1.03, sky_pull=0.10)
+    gm = grade(mob, lift_shadows=0.022, warm=(0.026, 0.007, -0.026),
+               gain=(1.045, 1.005, 0.940), gamma=1.01, sky_pull=0.12)
 
     gd.save(f"{OUT}/hero-desktop.png")
     gm.save(f"{OUT}/hero-mobile.png")
@@ -283,6 +326,9 @@ def main():
     build_steam(desk)
     build_condensation()
     build_drip()
+    # Две колонны потока: крупные ближние клубы и мелкие дальние.
+    build_plume("plume-1", seed=21, n=26, r_lo=0.16, r_hi=0.34)
+    build_plume("plume-2", seed=88, n=44, r_lo=0.07, r_hi=0.17)
     print("готово →", OUT)
 
 

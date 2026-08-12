@@ -1,10 +1,10 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { gsap } from '@/lib/gsap'
 import { METRICS, DEFAULT_PAIR } from '@/lib/fonts'
 import { BRAND } from '@/lib/content'
 import { reduced } from '@/lib/motion'
+import { heroProgress } from '@/lib/scene'
 import { bakeNoise3D } from '@/lib/steam/noise3d'
 import { VERT, FLOW_FRAG, VOLUME_FRAG, BLEND_FRAG } from '@/lib/steam/shaders'
 
@@ -12,8 +12,6 @@ import { VERT, FLOW_FRAG, VOLUME_FRAG, BLEND_FRAG } from '@/lib/steam/shaders'
 const CROP = 0.15
 /** Половинное разрешение марша. */
 const SCALE = 0.5
-/** Хвост объёма ниже героя: там пар вытекает в следующий блок. */
-const TAIL = 0.26
 const FLOW_W = 320
 const FLOW_H = 200
 const FPS_FLOOR = 45
@@ -21,19 +19,20 @@ const FPS_FLOOR = 45
 type Kill = () => void
 
 /**
- * Объёмный пар героя.
+ * Восходящий поток пара в сцене героя.
  *
- * Трёхмерное шумовое поле, луч сквозь тело, рассеяние в сторону света.
- * Пар стелется пластами: шум растянут по горизонтали втрое, дрейф почти
- * незаметен, накопленная непрозрачность ограничена половиной — сквозь
- * пар обязана читаться фотография.
+ * Пар рождается из полосы под нижней кромкой кадра — из-под слова — и
+ * поднимается через весь кадр отдельными клубами. Плотность максимальна у
+ * источника и падает по мере подъёма; к верхней трети поток истончается
+ * до полной прозрачности. Разброс по глубине даёт объём: ближние клубы
+ * крупнее и быстрее, дальние мельче и медленнее.
  *
- * Вордмарк живёт внутри объёма дважды: как изображение на своей глубине
- * и как препятствие для среды. Поле букв печётся в отдельную текстуру:
- * R — близость к литере, G — верхняя кромка, B — разрежение за буквой.
+ * Слово стоит близко к камере, поэтому основная масса пара идёт за ним и
+ * вордмарк читается целиком. Перед словом остаётся только редкий
+ * прозрачный ближний слой.
  *
- * Холст выходит ниже героя на TAIL: там объём вытягивается за границу
- * экрана и растворяется в фоне следующего блока, шва не остаётся.
+ * По прогрессу сцены поток усиливается и поднимается выше, а слово
+ * всплывает вместе с ним и растворяется.
  */
 export function SteamVolume() {
   const host = useRef<HTMLDivElement>(null)
@@ -41,10 +40,11 @@ export function SteamVolume() {
   useEffect(() => {
     const box = host.current
     if (!box) return
-    const hero = document.querySelector('.hero') as HTMLElement | null
-    if (!hero) return
+    const stage = box.closest('.hero__stage') as HTMLElement | null
+    if (!stage) return
 
-    const q = new URLSearchParams(window.location.search).get('steam')
+    const sp = new URLSearchParams(window.location.search)
+    const q = sp.get('steam')
     if (q === 'off') return
     if (q !== 'force') {
       if (reduced()) return
@@ -54,12 +54,11 @@ export function SteamVolume() {
 
     let kill: Kill | null = null
     let dead = false
-    const sp = new URLSearchParams(window.location.search)
     const stepsQ = Number(sp.get('steps'))
-    // Ручной шаг: снимальщик сам двигает часы и курсор. Нужен потому, что
-    // на программном рендерере кадр идёт секунду, и «+0.2 с» иначе не снять.
+    // Ручной шаг: снимальщик сам двигает часы, курсор и прогресс сцены.
+    // Нужен потому, что на программном рендерере кадр идёт секунду.
     const manual = q === 'force' && sp.get('manual') === '1'
-    start(hero, box, q === 'force', stepsQ, manual).then((k) => {
+    start(stage, box, q === 'force', stepsQ, manual).then((k) => {
       if (dead) k?.()
       else kill = k
     })
@@ -73,7 +72,7 @@ export function SteamVolume() {
 }
 
 async function start(
-  hero: HTMLElement,
+  stage: HTMLElement,
   box: HTMLElement,
   force: boolean,
   stepsQ: number,
@@ -102,7 +101,7 @@ async function start(
   renderer.setPixelRatio(1)
   renderer.setClearColor(0x000000, 0)
   box.appendChild(canvas)
-  hero.dataset.gl = '1'
+  stage.dataset.gl = '1'
 
   const baked = bakeNoise3D()
   const noiseTex = new THREE.Data3DTexture(baked.data, baked.size, baked.size, baked.size)
@@ -116,7 +115,7 @@ async function start(
   noiseTex.unpackAlignment = 1
   noiseTex.needsUpdate = true
 
-  // ── Вордмарк и поле препятствия ────────────────────────────────────
+  // ── Вордмарк и поле обтекания ──────────────────────────────────────
   const wordCanvas = document.createElement('canvas')
   const wordCtx = wordCanvas.getContext('2d')!
   const wordTex = new THREE.CanvasTexture(wordCanvas)
@@ -135,126 +134,82 @@ async function start(
   const family = m.family
   const weight = DEFAULT_PAIR.displayWeight
   const letters = BRAND.split('')
-  const rise = letters.map(() => 1)
 
   let W = 0
-  let heroH = 0
-  let tailH = 0
-  let canvasH = 0
+  let H = 0
 
+  /**
+   * Раскладка слова. Кегль вписывается и в высоту экрана, и в его ширину,
+   * поэтому срез нижней кромкой всегда одна и та же доля высоты литеры,
+   * а по бокам слово не выходит за кадр ни на одном вьюпорте.
+   */
   const layout = () => {
     const pad = Math.min(26, Math.max(10, W * 0.014))
     const sum = letters.reduce((a, c) => a + (m.adv[c] ?? 0.6), 0)
-    const size = Math.min((0.22 * heroH) / m.capR, ((W - 2 * pad) / sum) * 0.94)
+    const size = Math.min((0.22 * H) / m.capR, ((W - 2 * pad) / sum) * 0.94)
     const gap = (W - 2 * pad - sum * size) / (letters.length - 1)
-    return { pad, size, gap, baseline: heroH + CROP * m.capR * size }
+    return { pad, size, gap, baseline: H + CROP * m.capR * size }
   }
 
-  /** Рисует слово. Часть ниже кромки героя срезается — это и есть обрезка. */
-  const drawWord = () => {
-    if (!W || !canvasH) return
-    if (wordCanvas.width !== W || wordCanvas.height !== canvasH) {
-      wordCanvas.width = W
-      wordCanvas.height = canvasH
-    }
+  const paintWord = (ctx: CanvasRenderingContext2D, s: number, dy = 0) => {
     const { pad, size, gap, baseline } = layout()
-    wordCtx.clearRect(0, 0, W, canvasH)
-    wordCtx.font = `${weight} ${size}px "${family}", Georgia, serif`
-    wordCtx.fillStyle = '#f5f2eb'
-    wordCtx.textBaseline = 'alphabetic'
-    let x = pad
-    letters.forEach((c, i) => {
-      wordCtx.fillText(c, x, baseline + rise[i] * size * 1.08)
-      x += (m.adv[c] ?? 0.6) * size + gap
+    ctx.font = `${weight} ${size * s}px "${family}", Georgia, serif`
+    ctx.textBaseline = 'alphabetic'
+    let x = pad * s
+    letters.forEach((c) => {
+      ctx.fillText(c, x, (baseline + dy) * s)
+      x += ((m.adv[c] ?? 0.6) * size + gap) * s
     })
-    // Ниже кромки экрана слова нет: хвост объёма букв не содержит.
-    wordCtx.clearRect(0, heroH, W, canvasH - heroH)
+  }
+
+  const drawWord = () => {
+    if (!W || !H) return
+    if (wordCanvas.width !== W || wordCanvas.height !== H) {
+      wordCanvas.width = W
+      wordCanvas.height = H
+    }
+    wordCtx.clearRect(0, 0, W, H)
+    wordCtx.fillStyle = '#f7f4ed'
+    paintWord(wordCtx, 1)
     wordTex.needsUpdate = true
   }
 
   /**
-   * Печёт поле препятствия. Считается один раз на раскладку, не в кадре:
-   * размытие здесь — операция сборки, а не анимации.
+   * Печёт гало снаружи литер: размытый силуэт минус сам силуэт. Внутри
+   * буквы поля нет, поэтому между буквами поток проходит свободно, а у
+   * кромки прижимается к контуру. Размытие здесь — операция сборки,
+   * в кадре не повторяется.
    */
   const bakeField = () => {
-    if (!W || !canvasH) return
+    if (!W || !H) return
     const fw = Math.max(2, Math.round(W / 2))
-    const fh = Math.max(2, Math.round(canvasH / 2))
+    const fh = Math.max(2, Math.round(H / 2))
     fieldCanvas.width = fw
     fieldCanvas.height = fh
 
-    const { pad, size, gap, baseline } = layout()
-    const s = 0.5
-    const mk = () => {
-      const c = document.createElement('canvas')
-      c.width = fw
-      c.height = fh
-      return c
+    const c = document.createElement('canvas')
+    c.width = fw
+    c.height = fh
+    const x = c.getContext('2d')!
+    x.fillStyle = '#fff'
+    try {
+      x.filter = 'blur(13px)'
+    } catch {
+      /* фильтра нет — поле останется резче, но работать будет */
     }
-    const paint = (ctx: CanvasRenderingContext2D, dy: number) => {
-      ctx.font = `${weight} ${size * s}px "${family}", Georgia, serif`
-      ctx.fillStyle = '#fff'
-      ctx.textBaseline = 'alphabetic'
-      let x = pad * s
-      letters.forEach((c) => {
-        ctx.fillText(c, x, (baseline + dy) * s)
-        x += ((m.adv[c] ?? 0.6) * size + gap) * s
-      })
-    }
-    const blur = (ctx: CanvasRenderingContext2D, px: number) => {
-      try {
-        ctx.filter = `blur(${px}px)`
-      } catch {
-        /* фильтра нет — поле останется резче, но работать будет */
-      }
-    }
+    paintWord(x, 0.5)
+    x.filter = 'none'
+    x.globalCompositeOperation = 'destination-out'
+    paintWord(x, 0.5)
+    x.globalCompositeOperation = 'source-over'
 
-    // R — близость к литере: размытый силуэт.
-    const cR = mk()
-    const xR = cR.getContext('2d')!
-    blur(xR, 16)
-    paint(xR, 0)
-    xR.filter = 'none'
-
-    // G — верхняя кромка: силуэт минус он же, сдвинутый вниз.
-    const cG = mk()
-    const xG = cG.getContext('2d')!
-    blur(xG, 3)
-    paint(xG, 0)
-    xG.filter = 'none'
-    xG.globalCompositeOperation = 'destination-out'
-    blur(xG, 3)
-    paint(xG, size * 0.055)
-    xG.filter = 'none'
-    xG.globalCompositeOperation = 'source-over'
-
-    // B — разрежение за буквой: силуэт, сдвинутый вниз и размытый,
-    // из которого вычтена сама литера.
-    const cB = mk()
-    const xB = cB.getContext('2d')!
-    blur(xB, 20)
-    paint(xB, size * 0.10)
-    xB.filter = 'none'
-    xB.globalCompositeOperation = 'destination-out'
-    paint(xB, 0)
-    xB.globalCompositeOperation = 'source-over'
-
-    // Ниже кромки героя букв нет — значит нет и препятствия. Без этого
-    // в хвосте плотность растёт от литер, которых не видно.
-    const cutY = Math.round(heroH * s)
-    for (const c of [cR, cG, cB]) {
-      const x = c.getContext('2d')!
-      x.clearRect(0, cutY, fw, fh - cutY)
-    }
-
-    const get = (c: HTMLCanvasElement) => c.getContext('2d')!.getImageData(0, 0, fw, fh).data
-    const [dR, dG, dB] = [get(cR), get(cG), get(cB)]
+    const src = x.getImageData(0, 0, fw, fh).data
     const out = fieldCtx.createImageData(fw, fh)
     for (let i = 0; i < fw * fh; i++) {
       const j = i * 4
-      out.data[j] = dR[j + 3]
-      out.data[j + 1] = dG[j + 3]
-      out.data[j + 2] = dB[j + 3]
+      out.data[j] = src[j + 3]
+      out.data[j + 1] = 0
+      out.data[j + 2] = 0
       out.data[j + 3] = 255
     }
     fieldCtx.putImageData(out, 0, 0)
@@ -310,9 +265,10 @@ async function start(
       uTime: { value: 0 },
       uAspect: { value: 1 },
       uFrame: { value: 0 },
-      uSteps: { value: stepsQ >= 6 && stepsQ <= 48 ? stepsQ : 28 },
-      uHeroFrac: { value: 1 },
-      uTailFrac: { value: 0 },
+      uSteps: { value: stepsQ >= 6 && stepsQ <= 48 ? stepsQ : 26 },
+      uProgress: { value: 0 },
+      uWordRise: { value: 0 },
+      uWordA: { value: 1 },
     },
   })
 
@@ -342,22 +298,17 @@ async function start(
   scene.add(mesh)
 
   const resize = () => {
-    W = hero.clientWidth
-    heroH = hero.clientHeight
-    if (!W || !heroH) return
-    tailH = Math.round(heroH * TAIL)
-    canvasH = heroH + tailH
-    box.style.height = `${canvasH}px`
-    renderer.setSize(W, canvasH, false)
+    W = stage.clientWidth
+    H = stage.clientHeight
+    if (!W || !H) return
+    renderer.setSize(W, H, false)
     const rw = Math.max(2, Math.round(W * SCALE))
-    const rh = Math.max(2, Math.round(canvasH * SCALE))
+    const rh = Math.max(2, Math.round(H * SCALE))
     volRT.setSize(rw, rh)
     histA.setSize(rw, rh)
     histB.setSize(rw, rh)
-    volMat.uniforms.uAspect.value = W / canvasH
-    volMat.uniforms.uHeroFrac.value = heroH / canvasH
-    volMat.uniforms.uTailFrac.value = tailH / canvasH
-    flowMat.uniforms.uAspect.value = W / canvasH
+    volMat.uniforms.uAspect.value = W / H
+    flowMat.uniforms.uAspect.value = W / H
     drawWord()
     bakeField()
   }
@@ -375,47 +326,36 @@ async function start(
 
   const onMove = (e: PointerEvent) => {
     if (e.pointerType !== 'mouse') return
-    const r = hero.getBoundingClientRect()
-    p1.set((e.clientX - r.left) / r.width, 1 - (e.clientY - r.top) / canvasH)
+    const r = stage.getBoundingClientRect()
+    p1.set((e.clientX - r.left) / r.width, 1 - (e.clientY - r.top) / r.height)
     active = 1
     const nx = (e.clientX / window.innerWidth - 0.5) * 2
     const ny = (e.clientY / window.innerHeight - 0.5) * 2
-    camTX = -nx * (12 / Math.max(canvasH, 1)) * 2.2
-    camTY = ny * (12 / Math.max(canvasH, 1)) * 2.2
+    camTX = -nx * (12 / Math.max(H, 1)) * 2.2
+    camTY = ny * (12 / Math.max(H, 1)) * 2.2
   }
   const onLeave = () => {
     active = 0
     camTX = 0
     camTY = 0
   }
-  hero.addEventListener('pointermove', onMove, { passive: true })
-  hero.addEventListener('pointerleave', onLeave)
+  stage.addEventListener('pointermove', onMove, { passive: true })
+  stage.addEventListener('pointerleave', onLeave)
 
-  const intro = gsap.to(rise, {
-    ...Object.fromEntries(letters.map((_, i) => [i, 0])),
-    duration: 1.5,
-    ease: 'expo.out',
-    stagger: 0.05,
-    delay: 0.25,
-    onUpdate: drawWord,
-  })
-  gsap.set(canvas, { opacity: 0 })
-  const fadeIn = gsap.to(canvas, { opacity: 1, duration: 1.4, delay: 0.55, ease: 'power2.out' })
-
-  // ── Герой ушёл из кадра — считать нечего ───────────────────────────
+  // ── Сцена ушла из кадра — считать нечего ───────────────────────────
   let onScreen = true
   const io = new IntersectionObserver(
     ([e]) => {
       const was = onScreen
       onScreen = e.isIntersecting
-      if (onScreen && !was && !stopped) {
+      if (onScreen && !was && !stopped && !manual) {
         last = performance.now()
         raf = requestAnimationFrame(render)
       }
     },
     { threshold: 0 },
   )
-  io.observe(hero)
+  io.observe(stage)
 
   // ── Цикл ───────────────────────────────────────────────────────────
   let frame = 0
@@ -425,6 +365,8 @@ async function start(
   let watchdogDone = false
   let stopped = false
   const startedAt = performance.now()
+  /** Ручной прогресс перебивает мастер-таймлайн только в снимальном режиме. */
+  let manualProgress: number | null = null
 
   function render(now: number) {
     if (stopped) return
@@ -435,8 +377,14 @@ async function start(
     if (!manual) raf = requestAnimationFrame(render)
     const dt = Math.min(0.05, (now - last) / 1000)
     last = now
-    if (!W || !canvasH) return
+    if (!W || !H) return
     if (!watchdogDone && dt > 0) samples.push(1 / dt)
+
+    const pr = manualProgress ?? heroProgress()
+    volMat.uniforms.uProgress.value = pr
+    // Слово всплывает вместе с потоком и растворяется позже текста.
+    volMat.uniforms.uWordRise.value = pr * 0.30
+    volMat.uniforms.uWordA.value = 1 - smoothstep(0.44, 0.92, pr)
 
     flowMat.uniforms.uPrev.value = flowA.texture
     flowMat.uniforms.uP1.value.copy(p1)
@@ -474,7 +422,7 @@ async function start(
     if (!watchdogDone && now - startedAt > 2000) {
       watchdogDone = true
       // Первые кадры прогревочные и их отбрасываем — но только если
-      // кадров вообще набралось. Машина, не осилившая шесть кадров за
+      // кадров вообще набралось. Машина, не осилившая шести кадров за
       // две секунды, обязана получить откат, а не оценку «60».
       const s = (samples.length > 10 ? samples.slice(5) : samples).sort((a, b) => a - b)
       const med = s.length ? s[Math.floor(s.length / 2)] : 0
@@ -491,14 +439,8 @@ async function start(
     // Виртуальные часы: шаг в 1/60 с независимо от того, сколько
     // реального времени железо потратило на кадр.
     watchdogDone = true
-    intro.progress(1)
-    fadeIn.progress(1)
     let vnow = performance.now()
     ;(window as unknown as { __steam?: unknown }).__steam = {
-      /**
-       * Прокрутить секунды модели. Затухание считается от dt, поэтому
-       * крупный шаг годится для «отстояться», мелкий — для фаз реакции.
-       */
       run(seconds: number, hz = 60) {
         const step = 1000 / hz
         const n = Math.max(1, Math.round(seconds * hz))
@@ -508,14 +450,17 @@ async function start(
           render(vnow)
         }
       },
-      /** Поставить курсор в точку экрана (координаты страницы). */
       point(cx: number, cy: number) {
-        const r = hero.getBoundingClientRect()
-        p1.set((cx - r.left) / r.width, 1 - (cy - r.top) / canvasH)
+        const r = stage.getBoundingClientRect()
+        p1.set((cx - r.left) / r.width, 1 - (cy - r.top) / r.height)
         active = 1
       },
       leave() {
         active = 0
+      },
+      /** Поставить прогресс сцены, минуя мастер-таймлайн. */
+      progress(v: number | null) {
+        manualProgress = v
       },
     }
   } else {
@@ -527,10 +472,8 @@ async function start(
     if (raf) cancelAnimationFrame(raf)
     io.disconnect()
     window.removeEventListener('resize', onResize)
-    hero.removeEventListener('pointermove', onMove)
-    hero.removeEventListener('pointerleave', onLeave)
-    intro.kill()
-    fadeIn.kill()
+    stage.removeEventListener('pointermove', onMove)
+    stage.removeEventListener('pointerleave', onLeave)
     flowA.dispose()
     flowB.dispose()
     volRT.dispose()
@@ -549,9 +492,15 @@ async function start(
   }
 
   function fallback() {
-    delete hero.dataset.gl
+    delete stage.dataset.gl
     dispose()
   }
 
   return dispose
+}
+
+/** smoothstep без three: нужен один раз, тянуть математику не за чем. */
+function smoothstep(a: number, b: number, x: number) {
+  const t = Math.min(1, Math.max(0, (x - a) / (b - a)))
+  return t * t * (3 - 2 * t)
 }

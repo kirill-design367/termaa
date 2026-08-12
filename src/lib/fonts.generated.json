@@ -10,6 +10,7 @@
   ],
   "bytes": 17904,
   "upm": 1000,
+  "weight": 400,
   "capR": 0.723,
   "ascR": 0.77,
   "descR": -0.23,
@@ -19,6 +20,52 @@
    "R": 0.736,
    "M": 0.985,
    "A": 0.697
+  }
+ },
+ "gramatika": {
+  "id": "gramatika",
+  "family": "Gramatika",
+  "role": "text",
+  "file": "gramatika.woff2",
+  "variable": false,
+  "wght": [
+   400
+  ],
+  "bytes": 16164,
+  "upm": 1000,
+  "weight": 400,
+  "capR": 0.65,
+  "ascR": 1.0,
+  "descR": -0.375,
+  "adv": {
+   "T": 0.575,
+   "E": 0.54,
+   "R": 0.575,
+   "M": 0.75,
+   "A": 0.61
+  }
+ },
+ "gramatika-bold": {
+  "id": "gramatika-bold",
+  "family": "Gramatika",
+  "role": "text",
+  "file": "gramatika-bold.woff2",
+  "variable": false,
+  "wght": [
+   700
+  ],
+  "bytes": 15776,
+  "upm": 1000,
+  "weight": 700,
+  "capR": 0.65,
+  "ascR": 1.0,
+  "descR": -0.375,
+  "adv": {
+   "T": 0.625,
+   "E": 0.59,
+   "R": 0.605,
+   "M": 0.77,
+   "A": 0.66
   }
  },
  "golos": {
@@ -33,6 +80,7 @@
   ],
   "bytes": 39568,
   "upm": 1000,
+  "weight": 400,
   "capR": 0.7,
   "ascR": 0.98,
   "descR": -0.22,
@@ -56,6 +104,7 @@
   ],
   "bytes": 56580,
   "upm": 1000,
+  "weight": 400,
   "capR": 0.75,
   "ascR": 0.995,
   "descR": -0.245,
@@ -79,6 +128,7 @@
   ],
   "bytes": 47500,
   "upm": 2000,
+  "weight": 100,
   "capR": 0.7,
   "ascR": 0.975,
   "descR": -0.275,
@@ -102,6 +152,7 @@
   ],
   "bytes": 33204,
   "upm": 1000,
+  "weight": 400,
   "capR": 0.707,
   "ascR": 0.97,
   "descR": -0.305,
@@ -125,6 +176,7 @@
   ],
   "bytes": 23752,
   "upm": 2000,
+  "weight": 200,
   "capR": 0.72,
   "ascR": 1.066,
   "descR": -0.3,
@@ -148,6 +200,7 @@
   ],
   "bytes": 22120,
   "upm": 1000,
+  "weight": 400,
   "capR": 0.589,
   "ascR": 0.859,
   "descR": -0.249,

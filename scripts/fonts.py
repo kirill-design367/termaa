@@ -37,6 +37,8 @@ UNICODES = (
 FAMILIES = [
     # id, файл, семейство CSS, роль, вес/оси
     ("kudryashev", "KudryashevDisplay.ttf", "Kudryashev Display", "display", None),
+    ("gramatika",  "Gramatika-Regular.ttf", "Gramatika", "text", None),
+    ("gramatika-bold", "Gramatika-Bold.ttf", "Gramatika", "text", None),
     ("golos",     "GolosText_wght.ttf",    "Golos Text", "text",    (400, 900)),
     ("unbounded", "Unbounded_wght.ttf",    "Unbounded",  "display", (200, 900)),
     ("geologica", "Geologica_CRSV_SHRP_slnt_wght.ttf", "Geologica", "display", (100, 900)),
@@ -65,6 +67,7 @@ def metrics(path):
     f.close()
     return dict(
         upm=upm,
+        weight=int(getattr(os2, "usWeightClass", 400)),
         capR=round(cap / upm, 4),
         ascR=round(asc / upm, 4),
         descR=round(desc / upm, 4),
@@ -102,10 +105,26 @@ def main():
         m = metrics(src)
         out[fid] = dict(
             id=fid, family=family, role=role, file=f"{fid}.woff2",
-            variable=bool(axes), wght=list(axes) if axes else [400],
+            variable=bool(axes), wght=list(axes) if axes else [m["weight"]],
             bytes=os.path.getsize(dst), **m,
         )
         print(f"{fid:10} {family:12} {out[fid]['bytes']:>7} B  cap={m['capR']}")
+
+    # У Gramatika нет знака рубля, а он стоит в каждой цене. Вместо того
+    # чтобы менять типографику цен, отдаём ровно этот один знак отдельным
+    # начертанием с unicode-range: браузер сам подставит его в набор.
+    rub_src = os.path.join(SRC, "GolosText_wght.ttf")
+    if not os.path.exists(rub_src):
+        rub_src = os.path.join(LICENSED, "GolosText_wght.ttf")
+    rub_dst = os.path.join(OUT, "rub.woff2")
+    if os.path.exists(rub_src):
+        subprocess.run([
+            sys.executable, "-m", "fontTools.subset", rub_src,
+            "--unicodes=U+20BD", "--flavor=woff2", "--desubroutinize",
+            "--layout-features=", f"--output-file={rub_dst}",
+        ], check=True, capture_output=True)
+    if os.path.exists(rub_dst):
+        print(f"{'rub':10} знак рубля  {os.path.getsize(rub_dst):>7} B")
 
     with open(DATA, "w", encoding="utf-8") as fh:
         json.dump(out, fh, ensure_ascii=False, indent=1)

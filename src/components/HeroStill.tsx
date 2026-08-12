@@ -1,4 +1,5 @@
 import { A } from '@/lib/asset'
+import { SteamFlow } from './SteamFlow'
 import { BRAND, HOURS, NAV } from '@/lib/content'
 import { METRICS, type Pair } from '@/lib/fonts'
 import { pairVars } from '@/lib/pairStyle'
@@ -32,11 +33,7 @@ export function HeroStill({ pair }: { pair: Pair }) {
         ))}
       </div>
 
-      <div className="steam" aria-hidden="true">
-        <img className="steam__l" src={A('/img/steam-1.webp')} alt="" />
-        <img className="steam__l" src={A('/img/steam-2.webp')} alt="" />
-        <img className="steam__l" src={A('/img/steam-3.webp')} alt="" />
-      </div>
+      <SteamFlow />
 
       <header className="hdr" style={{ position: 'absolute' }}>
         <div className="hdr__in">

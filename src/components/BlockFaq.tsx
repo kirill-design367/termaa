@@ -16,7 +16,7 @@ export function BlockFaq() {
   const [open, setOpen] = useState<number | null>(0)
 
   return (
-    <section className="sec faq on-light" aria-label="Вопросы">
+    <section className="sec faq on-dark" aria-label="Вопросы">
       <div className="wrap faq__grid">
         <header className="faq__aside">
           <p className="eyebrow">Короткие ответы</p>

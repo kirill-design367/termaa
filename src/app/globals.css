@@ -91,13 +91,13 @@
 }
 
 html {
-  background: var(--stone-800);
+  background: var(--ink);
   -webkit-text-size-adjust: 100%;
 }
 
 body {
   margin: 0;
-  background: var(--stone-800);
+  background: transparent;
   color: var(--fg);
   font-family: var(--font-text);
   font-size: var(--t-body);
@@ -161,7 +161,7 @@ img {
   letter-spacing: 0.28em;
   text-transform: uppercase;
   color: var(--fg-mute);
-  font-weight: 500;
+  font-weight: 400;
 }
 
 .h2 {
@@ -197,6 +197,65 @@ img {
   line-height: 0.82;
 }
 
+/* Поток сквозь всю страницу: он и есть связующее вещество полотна.
+   Неподвижен относительно кадра, плотность вдвое ниже, чем в герое. */
+.flow-page {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.flow-page .flow {
+  position: absolute;
+  inset: 0;
+}
+
+.page {
+  position: relative;
+  z-index: 1;
+}
+
+/* Первая сцена лежит поверх последнего экрана героя и проявляется
+   сквозь пар, а не выезжает снизу. Границы между ними физически нет. */
+.sc-next {
+  margin-top: -100svh;
+}
+
+/* ══════════════════════════════════════════════════ полотно страницы ═══
+   Границ между сценами не существует. Фон — один неподвижный слой из
+   готовых состояний, мастер-таймлайн перегоняет их непрозрачностью по
+   прогрессу скролла. Ни одной заливки в кадре: только композитинг. */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.backdrop i {
+  position: absolute;
+  inset: 0;
+  display: block;
+  will-change: opacity;
+}
+
+.backdrop i:nth-child(1) {
+  background: linear-gradient(to bottom, var(--stone-900), var(--ink));
+}
+
+.backdrop i:nth-child(2) {
+  background: linear-gradient(to bottom, var(--ink), var(--stone-800) 62%, var(--stone-700));
+}
+
+.backdrop i:nth-child(3) {
+  background: linear-gradient(to bottom, var(--stone-700), var(--water-2) 58%, var(--water));
+}
+
+.backdrop i:nth-child(4) {
+  background: linear-gradient(to bottom, var(--water), var(--stone-900) 55%, var(--ink));
+}
+
 /* ═════════════════════════════════════════════════════════════ кнопки ═ */
 .btn {
   --btn-bg: var(--steam);
@@ -216,7 +275,7 @@ img {
   font-size: var(--t-cap);
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  font-weight: 500;
+  font-weight: 700;
   cursor: pointer;
   overflow: hidden;
   transition:
@@ -300,47 +359,71 @@ img {
 /* Капля срывается не в одной и той же точке — иначе приём читается как
    механика интерфейса, а не как вода. Смещение задаётся по порядку. */
 .btn:nth-of-type(2n),
-.hdr__link:nth-of-type(2n),
 .faq__q:nth-of-type(2n) {
   --drip-x: 63%;
 }
 
 .btn:nth-of-type(3n),
-.hdr__link:nth-of-type(3n),
 .faq__q:nth-of-type(3n) {
   --drip-x: 18%;
 }
 
-/* Ссылки навигации получают тот же приём — это фирменная механика. */
+/* ── Меню: испарение ──────────────────────────────────────────────────
+   Буквы поднимаются по одной снизу вверх, текст светлеет, под пунктом
+   проявляется тонкая линия и тут же уходит вверх, растворяясь. Цикл
+   0.6 с и не повторяется, пока курсор не ушёл и не вернулся: анимация
+   привязана к :hover и перезапускается только при новом наведении. */
+.hdr__link b {
+  display: inline-block;
+  font-weight: inherit;
+  will-change: transform;
+  transition: transform var(--d-s) var(--e-out);
+  transition-delay: calc(var(--i) * 0.02s);
+}
+
+.hdr__link:hover b,
+.hdr__link:focus-visible b {
+  transform: translateY(-3px);
+}
+
 .hdr__link::after {
   content: '';
   position: absolute;
-  left: -4px;
-  right: -4px;
-  top: 0;
-  height: 300%;
+  left: 0;
+  right: 0;
+  bottom: 0.15em;
+  height: 1px;
   background: currentColor;
-  -webkit-mask-image: var(--drip);
-  mask-image: var(--drip);
-  -webkit-mask-size: 20px 100%;
-  mask-size: 20px 100%;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  -webkit-mask-position: var(--drip-x, 34%) 0;
-  mask-position: var(--drip-x, 34%) 0;
   opacity: 0;
-  transform: translateY(-66%);
+  transform-origin: center;
   pointer-events: none;
 }
 
 .hdr__link:hover::after,
 .hdr__link:focus-visible::after {
-  animation: drip 600ms var(--e-drop) 1;
+  animation: evaporate 600ms var(--e-out) 1;
 }
 
-.hdr__link:hover {
+@keyframes evaporate {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scaleY(1);
+  }
+  18% {
+    opacity: 0.85;
+    transform: translate3d(0, 0, 0) scaleY(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(0, -13px, 0) scaleY(0.4);
+  }
+}
+
+.hdr__link:hover,
+.hdr__link:focus-visible {
   color: var(--steam);
 }
+
 
 .btn:active {
   transform: scale(0.975);
@@ -380,6 +463,8 @@ img {
 }
 
 .hdr__in {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   gap: var(--gut);
@@ -389,14 +474,33 @@ img {
   padding-inline: var(--pad);
 }
 
-/* Подложка появляется, когда шапка сходит с кадра героя.
-   Без backdrop-filter: живой фильтр во всю ширину экрана остаётся
-   в кадре в покое, а по правилу №4 фильтров в покое быть не должно.
-   Плотная плашка с растушёванным низом делает ту же работу даром. */
+/* Постоянная мягкая тень под шапкой. После осветления кадра небо в
+   верхнем углу почти белое, и белая навигация на нём переставала
+   читаться. Плотность у самой кромки 32 %, к двойной высоте шапки
+   сходит в ноль — видимой границы нет. */
 .hdr::before {
   content: '';
   position: absolute;
+  inset: 0 0 -125% 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in oklab, var(--ink) 54%, transparent) 0%,
+    color-mix(in oklab, var(--ink) 44%, transparent) 26%,
+    color-mix(in oklab, var(--ink) 16%, transparent) 58%,
+    transparent 100%
+  );
+}
+
+/* Плотная подложка появляется, когда шапка сходит с кадра героя.
+   Без backdrop-filter: живой фильтр во всю ширину экрана остаётся
+   в кадре в покое, а по правилу №4 фильтров в покое быть не должно.
+   Плашка с растушёванным низом делает ту же работу даром. */
+.hdr::after {
+  content: '';
+  position: absolute;
   inset: 0;
+  pointer-events: none;
   background: linear-gradient(
     to bottom,
     var(--stone-900) 0%,
@@ -407,7 +511,7 @@ img {
   transition: opacity var(--d-m) var(--e-out);
 }
 
-.hdr[data-stuck='1']::before {
+.hdr[data-stuck='1']::after {
   opacity: 1;
 }
 
@@ -430,29 +534,33 @@ img {
 .hdr__link {
   position: relative;
   display: inline-block;
-  /* Потёк обрезается коробкой ссылки — иначе он течёт по всей шапке. */
-  overflow: hidden;
   font-size: var(--t-cap);
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: color-mix(in oklab, currentColor 78%, transparent);
   transition: color var(--d-s) var(--e-out);
-  /* Капле нужна высота, иначе дорожка сжимается в чёрточку.
-     Шапка от этого не растёт — её высота задана --header-h. */
-  padding-block: 0.95em;
+  padding-block: 0.7em;
 }
 
 /* Янтарного подчёркивания под ссылкой больше нет: наведение на все
    ссылки и кнопки сайта отрабатывает потёком, он описан выше. */
 
 /* ═══════════════════════════════════════════════════════════════ герой ═ */
+/* Уже не экран, а протяжённая сцена: 200svh прокрутки на липкой площадке
+   в один экран. Развитие по скроллу пишет мастер-таймлайн. */
 .hero {
   position: relative;
+  height: 200svh;
+  color: var(--steam);
+}
+
+.hero__stage {
+  position: sticky;
+  top: 0;
   height: 100svh;
   min-height: 560px;
   overflow: hidden;
-  background: var(--stone-700);
-  color: var(--steam);
+  will-change: transform;
 }
 
 /* Слой 1 — фон. Отрицательный inset — запас под параллакс по курсору
@@ -470,25 +578,65 @@ img {
   object-position: 62% 58%;
 }
 
-/* Шторки: без них белый текст не сядет на светлый кадр. */
-.hero__scrim {
+/* Серой пелены во весь кадр нет: она и делала кадр тусклым. Подложка
+   осталась только под текстовым блоком, локальная и без видимой границы —
+   плотность не выше 35 %, край растворяется эллиптическим градиентом. */
+.hero__copy::before {
+  content: '';
+  position: absolute;
+  inset: -18% -30% -30% -22%;
+  pointer-events: none;
+  background: radial-gradient(
+    62% 58% at 34% 52%,
+    color-mix(in oklab, var(--ink) 35%, transparent) 0%,
+    color-mix(in oklab, var(--ink) 22%, transparent) 38%,
+    transparent 72%
+  );
+}
+
+/* ── Восходящий поток на испечённых слоях ─────────────────────────────
+   Колонны идут вверх бесконечным трансформом. Плитка стыкуется по
+   вертикали, поэтому цикла не видно. Ни одного анимируемого фильтра. */
+.flow {
   position: absolute;
   inset: 0;
+  z-index: 3;
   pointer-events: none;
-  background:
-    linear-gradient(
-      to bottom,
-      color-mix(in oklab, var(--stone-900) 62%, transparent) 0%,
-      transparent 26%,
-      transparent 52%,
-      color-mix(in oklab, var(--stone-900) 30%, transparent) 78%,
-      color-mix(in oklab, var(--stone-900) 62%, transparent) 100%
-    ),
-    linear-gradient(
-      to right,
-      color-mix(in oklab, var(--ink) 46%, transparent) 0%,
-      transparent 46%
-    );
+  overflow: hidden;
+  /* Плотность максимальна у источника и падает к верхней трети. */
+  -webkit-mask-image: linear-gradient(
+    to top,
+    #000 0%,
+    rgba(0, 0, 0, 0.72) 22%,
+    rgba(0, 0, 0, 0.26) 48%,
+    transparent 72%
+  );
+  mask-image: linear-gradient(
+    to top,
+    #000 0%,
+    rgba(0, 0, 0, 0.72) 22%,
+    rgba(0, 0, 0, 0.26) 48%,
+    transparent 72%
+  );
+}
+
+.flow__c {
+  position: absolute;
+  top: -100%;
+  height: 300%;
+  background-repeat: repeat-y;
+  background-size: 100% 33.3333%;
+  will-change: transform;
+  animation: rise linear infinite;
+}
+
+@keyframes rise {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(0, -33.3333%, 0);
+  }
 }
 
 /* Слой 2 — вордмарк. */
@@ -550,60 +698,18 @@ img {
   will-change: opacity;
 }
 
-/* Объём поднялся — испечённые полосы и разметочный вордмарк уходят.
-   Вернутся сами, если сторож погасит симуляцию по фактическому fps. */
-.hero[data-gl='1'] .steam,
-.hero[data-gl='1'] .wm {
+/* Объём поднялся — слово рисует он сам, разметочный вордмарк уходит.
+   Вернётся, если сторож погасит симуляцию по фактическому fps.
+   Испечённый поток при этом остаётся: он держит нижний регистр
+   плотности, а объём кладётся поверх. */
+.hero__stage[data-gl='1'] .wm {
   opacity: 0;
 }
 
-/* Слой 3 — пар. Лежит НАД вордмарком, поэтому слово уходит в него. */
-.steam {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 3;
-  height: min(62svh, 620px);
-  pointer-events: none;
-  overflow: hidden;
-}
-
-.steam__l {
-  position: absolute;
-  left: -6%;
-  bottom: -4%;
-  width: 112%;
-  height: auto;
-  will-change: transform, opacity;
-  transform-origin: 50% 100%;
-}
-
-/* Прочистка под курсором: из плотных тиров вычитается мягкий круг.
-   Радиус и центр — CSS-переменные, их пишет один quickSetter в rAF.
-   Ни одного анимируемого фильтра: круг заранее описан градиентом.    */
-.steam__l--cut {
-  --hx: 50%;
-  --hy: 50%;
-  --hr: 0px;
-  -webkit-mask-image: linear-gradient(#000, #000),
-    radial-gradient(
-      circle var(--hr) at var(--hx) var(--hy),
-      #000 0%,
-      rgba(0, 0, 0, 0.86) 42%,
-      rgba(0, 0, 0, 0.34) 68%,
-      transparent 100%
-    );
-  -webkit-mask-composite: source-out;
-  mask-image: linear-gradient(#000, #000),
-    radial-gradient(
-      circle var(--hr) at var(--hx) var(--hy),
-      #000 0%,
-      rgba(0, 0, 0, 0.86) 42%,
-      rgba(0, 0, 0, 0.34) 68%,
-      transparent 100%
-    );
-  mask-composite: subtract;
+/* Испечённый поток под объёмом ослабляется, чтобы они не складывались
+   в ту самую пелену, которой быть не должно. */
+.hero__stage[data-gl='1'] .flow {
+  opacity: 0.42;
 }
 
 /* Слой 4 — текст героя. */
@@ -693,8 +799,11 @@ img {
 /* ═════════════════════════════════════════════════════════════ секции ═ */
 .sec {
   position: relative;
-  background: var(--bg);
+  /* Собственного фона у секции нет: полотно под ней непрерывно, и любая
+     заливка здесь тут же читалась бы как шов. */
+  background: transparent;
   color: var(--fg);
+  z-index: 1;
 }
 
 .sec__head {
@@ -708,7 +817,6 @@ img {
 
 /* ── Блок 1. Комплекс ─────────────────────────────────────────────── */
 .zones {
-  --bg: var(--stone-900);
   height: 100svh;
   overflow: hidden;
 }
@@ -717,7 +825,26 @@ img {
   position: absolute;
   inset: 0;
   will-change: transform;
+  /* Зона непрозрачна намеренно: она накрывает предыдущую, и кросс-фейд
+     не нужен. Но её кромки давали ровную черту через весь кадр. */
   background: var(--stone-900);
+  /* Кромки полотна растворяются: соседние сцены перетекают одна в
+     другую, ровной черты во всю ширину не остаётся ни сверху, ни снизу.
+     Маска статична — это не анимируемый фильтр. */
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 18vh,
+    #000 calc(100% - 18vh),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 18vh,
+    #000 calc(100% - 18vh),
+    transparent 100%
+  );
 }
 
 /* Кадр держится сам: линия сверху, имя и температура на общей базовой
@@ -853,8 +980,7 @@ img {
 .visit {
   height: 100svh;
   overflow: hidden;
-  /* Цвет теплеет вместе с температурой — правит одна переменная. */
-  background: var(--visit-bg, var(--stone-700));
+  background: transparent;
 }
 
 .visit__fog {
@@ -989,8 +1115,8 @@ img {
   width: clamp(260px, 30vw, 540px);
   transform: translate(-120%, -46%) rotate(-14deg);
   will-change: transform;
-  color: var(--ink);
-  opacity: 0.6;
+  color: var(--fg);
+  opacity: 0.34;
   pointer-events: none;
 }
 
@@ -1014,7 +1140,7 @@ img {
   border: 1px solid var(--rule);
   border-radius: clamp(14px, 1.4vw, 22px);
   overflow: hidden;
-  background: color-mix(in oklab, var(--ink) 4%, transparent);
+  background: var(--surface, color-mix(in oklab, var(--steam) 6%, transparent));
   display: flex;
   align-items: flex-end;
 }
@@ -1078,7 +1204,7 @@ img {
   font-weight: var(--display-w);
   font-size: clamp(1.5rem, 2.4vw, 2.6rem);
   line-height: 1;
-  color: var(--ink);
+  color: var(--fg);
   white-space: nowrap;
 }
 
@@ -1087,7 +1213,7 @@ img {
   font-family: var(--font-text);
   font-size: 0.52em;
   margin-left: 0.24em;
-  color: color-mix(in oklab, var(--ink) 62%, transparent);
+  color: var(--fg-mute);
 }
 
 .col__name {
@@ -1123,7 +1249,7 @@ img {
   width: clamp(268px, 27vw, 420px);
   padding: clamp(22px, 2.4vw, 38px);
   border-radius: clamp(16px, 1.6vw, 24px);
-  background: color-mix(in oklab, var(--ink) 30%, transparent);
+  background: var(--surface, color-mix(in oklab, var(--steam) 8%, transparent));
   border: 1px solid var(--rule);
   will-change: transform;
 }
@@ -1528,15 +1654,15 @@ img {
 
 /* ══════════════════════════════════════════ фон и тема каждой сцены ═══ */
 .prices {
-  --bg: var(--stone-200);
+  --surface: color-mix(in oklab, var(--steam) 6%, transparent);
 }
 
 .revs {
-  --bg: var(--stone-700);
+  --surface: color-mix(in oklab, var(--steam) 8%, transparent);
 }
 
 .faq {
-  --bg: var(--stone-100);
+  --surface: color-mix(in oklab, var(--steam) 5%, transparent);
 }
 
 .route {
@@ -1564,6 +1690,10 @@ img {
 .hero:not(.still) .wm span,
 .hero:not(.still) h1 .ln > span {
   transform: translateY(112%);
+}
+
+.hero.still .flow__c {
+  animation: none;
 }
 
 .hero:not(.still) .steam__l,
@@ -1722,6 +1852,23 @@ img {
   position: absolute;
   inset: 0;
   z-index: 1;
+  /* Кромки полотна растворяются: соседние сцены перетекают одна в
+     другую, ровной черты во всю ширину не остаётся ни сверху, ни снизу.
+     Маска статична — это не анимируемый фильтр. */
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 18vh,
+    #000 calc(100% - 18vh),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 18vh,
+    #000 calc(100% - 18vh),
+    transparent 100%
+  );
 }
 
 /* Тон сцены меняется перекрёстным гашением готовых полотен,
@@ -1913,6 +2060,26 @@ img {
     animation-duration: 1ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 1ms !important;
+  }
+
+  /* Поток стоит: клубы на своих местах, кадр держится, движения нет. */
+  .flow__c {
+    animation: none !important;
+  }
+
+  /* Мастер-таймлайна нет — значит и протяжённой сцены нет: герой
+     разворачивается в обычный экран, следующая сцена идёт за ним
+     обычным потоком документа, без наложения. */
+  .hero {
+    height: 100svh;
+  }
+
+  .hero__stage {
+    position: relative;
+  }
+
+  .sc-next {
+    margin-top: 0;
   }
 
   .steam__l--cut {

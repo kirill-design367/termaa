@@ -12,7 +12,9 @@ export function pairVars(pair: Pair): CSSProperties {
   const t = METRICS[pair.text]
   return {
     '--font-display': `'${d.family}', Georgia, serif`,
-    '--font-text': `'${t.family}', system-ui, sans-serif`,
+    // 'Rub' стоит первым и покрывает ровно один знак — ₽. Всё остальное
+    // берётся из текстовой гарнитуры, как и должно.
+    '--font-text': `'Rub', '${t.family}', system-ui, sans-serif`,
     '--wm-cap': d.capR,
     '--wm-sum': wordmarkSum(d),
     '--wm-drop': wordmarkDrop(d),
