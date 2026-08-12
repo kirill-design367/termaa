@@ -25,7 +25,7 @@ const ctx = await b.newContext({
 })
 const p = await ctx.newPage()
 p.setDefaultTimeout(600000)
-await p.goto('http://127.0.0.1:8099/termaa/?steam=off', { waitUntil: 'networkidle' })
+await p.goto('http://127.0.0.1:8099/termaa/?water=off', { waitUntil: 'networkidle' })
 await p.waitForTimeout(2500)
 
 const total = await p.evaluate(() => document.body.scrollHeight - window.innerHeight)

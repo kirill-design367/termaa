@@ -23,7 +23,12 @@ export function Header() {
       if (raf) return
       raf = requestAnimationFrame(() => {
         raf = 0
-        el.dataset.stuck = window.scrollY > window.innerHeight * 0.72 ? '1' : '0'
+        // Порог поднят с 0.72 до 1.05 экрана. Плашка под шапкой тёмная,
+        // и на прежнем пороге она проявлялась, пока фотография ещё
+        // светлая: по верху кадра шла тёмная полоса в 34 уровня — то
+        // есть ровно тот шов, которого быть не должно. Теперь плашка
+        // приходит тогда, когда фотография уже растворилась.
+        el.dataset.stuck = window.scrollY > window.innerHeight * 1.05 ? '1' : '0'
       })
     }
     onScroll()

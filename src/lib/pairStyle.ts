@@ -23,8 +23,7 @@ export function pairVars(pair: Pair): CSSProperties {
     // отказывается оставлять литеральный url() в CSS в покое.
     '--drip': `url(${A('/img/drip.webp')})`,
     '--frost': `url(${A('/img/frost.webp')})`,
-    '--ripple': `url(${A('/img/ripple.webp')})`,
-    '--pool': `url(${A('/img/pool-desktop.webp')})`,
-    '--pool-m': `url(${A('/img/pool-mobile.webp')})`,
+    // Маска бассейна сюда больше не ходит: воду рисует холст, и он
+    // берёт её текстурой напрямую — CSS о ней ничего не знает.
   } as CSSProperties
 }

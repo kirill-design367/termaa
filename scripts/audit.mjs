@@ -62,7 +62,7 @@ for (const v of VIEWS) {
       }
       if (clipped) continue
       if (cs.transform !== 'none' && !cs.transform.startsWith('matrix(1,')) continue
-      if (r.right > window.innerWidth + 2 && !el.closest('.steam,.revs__track,.wm,.hero__bg,.visit__drops'))
+      if (r.right > window.innerWidth + 2 && !el.closest('.revs__track,.hero__bg,.hero__title,.water,.visit__drops'))
         bad.push(`${el.className || el.tagName} вылезает вправо на ${Math.round(r.right - window.innerWidth)}px`)
     }
     return [...new Set(bad)].slice(0, 8)

@@ -198,24 +198,6 @@ img {
   line-height: 0.82;
 }
 
-/* Поток сквозь всю страницу: он и есть связующее вещество полотна.
-   Неподвижен относительно кадра, плотность вдвое ниже, чем в герое. */
-.flow-page {
-  position: fixed;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  /* Базовая плотность полотна. Мастер-таймлайн поднимает её на стыке
-     сцен: переход делает пар, и в этот момент он заполняет кадр. */
-  opacity: 0.45;
-  will-change: opacity;
-}
-
-.flow-page .flow {
-  position: absolute;
-  inset: 0;
-}
-
 .page {
   position: relative;
   z-index: 1;
@@ -546,8 +528,16 @@ img {
   height: var(--header-h);
   display: flex;
   align-items: center;
-  color: var(--steam);
+  /* Над кадром героя чернила тёмные: небо там почти белое, и тёмное на
+     нём читается в двадцать раз лучше белого — при том, что подложки
+     нет ни у того, ни у другого. Как только шапка сходит с кадра и под
+     ней появляется своя тёмная плашка, цвет возвращается к пару. */
+  color: var(--ink);
   transition: color var(--d-m) var(--e-out);
+}
+
+.hdr[data-stuck='1'] {
+  color: var(--steam);
 }
 
 .hdr__in {
@@ -562,31 +552,11 @@ img {
   padding-inline: var(--pad);
 }
 
-/* Постоянная мягкая тень под шапкой. После осветления кадра небо в
-   верхнем углу почти белое, и белая навигация на нём переставала
-   читаться. Плотность у самой кромки 32 %, к двойной высоте шапки
-   сходит в ноль — видимой границы нет. */
-.hdr::before {
-  content: '';
-  position: absolute;
-  inset: 0 0 -240% 0;
-  pointer-events: none;
-  /* Тень мягкая и длинная, а не плашка у самой кромки: у верхнего края
-     она слабее, максимум приходится ровно на строку навигации, дальше
-     хвост тянется втрое дольше высоты шапки и сходит в ноль. Плотность
-     выведена из требования 4.5:1 для текста в 11 px — фон под меню не
-     светлее 110 уровней. */
-  background: linear-gradient(
-    to bottom,
-    color-mix(in oklab, var(--ink) 54%, transparent) 0%,
-    color-mix(in oklab, var(--ink) 67%, transparent) 18%,
-    color-mix(in oklab, var(--ink) 56%, transparent) 32%,
-    color-mix(in oklab, var(--ink) 24%, transparent) 56%,
-    color-mix(in oklab, var(--ink) 8%, transparent) 78%,
-    transparent 100%
-  );
-}
-
+/* Тени под шапкой нет. Ни скрима, ни плашки, ни градиента: над
+   фотографией не лежит ни одного слоя. Контраст решается чернилами —
+   небо в верхнем углу почти белое (медиана светлоты 0.96), и почти
+   чёрные пункты дают на нём 20:1, тогда как белые не дотягивают и до
+   1.1:1 ни при какой тени. */
 
 /* Плотная подложка появляется, когда шапка сходит с кадра героя.
    Без backdrop-filter: живой фильтр во всю ширину экрана остаётся
@@ -629,16 +599,22 @@ img {
   white-space: nowrap;
 }
 
-/* Меню занимает всю оставшуюся ширину шапки: вордмарк у левого поля,
-   пункты равными промежутками до правого, последний — у правого поля.
+/* Пункты идут группой от левого поля, а не растянуты до правого.
+   Причина не вкусовая, а замеренная: правый верхний угол кадра занят
+   тёмным подшивным потолком павильона (светлота 0.012), и почти чёрный
+   пункт давал там 1.1:1 при требовании 4.5:1. Подложку под него ставить
+   нельзя, второй цвет чернил в одной строке меню читается поломкой —
+   значит, пункты стоят там, где под ними небо.
+
    Промежутки большие, кегль мелкий, трекинг крупный: сжимать пункты
    нельзя, разрядка здесь и есть признак дороговизны. */
 .hdr__nav {
   flex: 1;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
-  padding-left: clamp(48px, 9vw, 200px);
+  gap: clamp(26px, 3.2vw, 62px);
+  padding-left: clamp(40px, 6vw, 120px);
 }
 
 .hdr__link {
@@ -651,13 +627,16 @@ img {
   text-indent: 0.34em;
   text-transform: uppercase;
   white-space: nowrap;
-  color: color-mix(in oklab, currentColor 78%, transparent);
+  /* Полная плотность, а не 78 %. Прозрачные чернила подмешивают землю
+     в сам знак: над светлой фотографией это съедало почти четверть
+     контраста — а земли под пунктом теперь нет никакой. */
+  color: currentColor;
   transition: color var(--d-s) var(--e-out);
   padding-block: 0.7em;
 }
 
-/* Последний пункт стоит ровно у правого поля: висячий трекинг снимаем. */
-.hdr__nav .hdr__link:last-child {
+/* Висячий трекинг после последней литеры съедает промежуток. */
+.hdr__nav .hdr__link {
   margin-right: -0.34em;
 }
 
@@ -665,12 +644,21 @@ img {
    ссылки и кнопки сайта отрабатывает потёком, он описан выше. */
 
 /* ═══════════════════════════════════════════════════════════════ герой ═ */
-/* Уже не экран, а протяжённая сцена: 260svh прокрутки на липкой площадке
-   в один экран. Развитие по скроллу пишет мастер-таймлайн. */
+/* Протяжённая сцена: 220svh прокрутки на липкой площадке в один экран.
+   Над фотографией НЕТ НИ ОДНОГО СЛОЯ — ни пелены, ни притенения под
+   шапкой, ни зерна, ни виньеток, ни подложек под текст. Всё, что нужно
+   было поправить по светлоте, поправлено в самом файле на сборке.
+   Единственное, что лежит на кадре, — холст воды, и он не слой поверх,
+   а тот же кадр, пересчитанный рябью: где ряби нет, холст прозрачен. */
 .hero {
   position: relative;
-  height: 260svh;
-  color: var(--steam);
+  height: 220svh;
+  /* Кадр светлый по всей площади: медиана светлоты 0.96 под шапкой и
+     0.67 в полосе заголовка. Поэтому чернила тёмные — по тому же
+     правилу, по которому тёмная навигация бьёт белую со скримом.
+     Переключается одной переменной. */
+  --hero-ink: var(--ink);
+  color: var(--hero-ink);
 }
 
 .hero__stage {
@@ -681,280 +669,113 @@ img {
   overflow: hidden;
 }
 
-/* Слой 1 — фон. Отрицательный inset — запас под параллакс по курсору
-   (амплитуда до 12 px) и под собственный дрейф кадра, чтобы у него не
-   открывался край. */
 .hero__bg {
   position: absolute;
-  inset: -2.2%;
-  will-change: transform;
-}
-
-/* Внутренний узел дрейфует сам, внешний ведёт мастер-таймлайн: две
-   анимации на одном узле дрались бы за transform. */
-.hero__frame {
-  position: absolute;
   inset: 0;
-  will-change: transform;
-}
-
-/* Рябь по воде. Область — испечённая маска бассейна, снятая полигоном
-   с самого кадра. Слой едет трансформом, плитка стыкуется по обеим осям,
-   поэтому цикла не видно. */
-.hero__ripple {
-  position: absolute;
-  inset: -6% -6% -6% -6%;
-  background-image: var(--ripple);
-  background-repeat: repeat;
-  background-size: 46% auto;
-  opacity: 0.5;
-  mix-blend-mode: soft-light;
-  pointer-events: none;
-  -webkit-mask-image: var(--pool);
-  mask-image: var(--pool);
-  -webkit-mask-size: 100% 100%;
-  mask-size: 100% 100%;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  animation: ripple 26s linear infinite;
-  will-change: transform;
-}
-
-@keyframes ripple {
-  from {
-    transform: translate3d(0, 0, 0);
-  }
-  to {
-    transform: translate3d(-46%, -2.6%, 0);
-  }
 }
 
 .hero__bg img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  /* Дублируется в src/lib/water.ts: положение линии воды на экране
+     считается из этих же двух чисел. */
   object-position: 62% 58%;
 }
 
-/* Серой пелены во весь кадр нет: она и делала кадр тусклым. Подложка
-   осталась только под текстовым блоком, локальная и без видимой границы —
-   плотность не выше 35 %, край растворяется эллиптическим градиентом. */
-.hero__copy::before {
-  content: '';
-  position: absolute;
-  inset: -18% -30% -30% -22%;
-  pointer-events: none;
-  background: radial-gradient(
-    62% 58% at 34% 52%,
-    color-mix(in oklab, var(--ink) 35%, transparent) 0%,
-    color-mix(in oklab, var(--ink) 22%, transparent) 38%,
-    transparent 72%
-  );
-}
-
-/* ── Восходящий поток на испечённых слоях ─────────────────────────────
-   Колонны идут вверх бесконечным трансформом. Плитка стыкуется по
-   вертикали, поэтому цикла не видно. Ни одного анимируемого фильтра. */
-.flow {
+/* ── Вода ─────────────────────────────────────────────────────────────
+   Холст лежит на габарите бассейна и нигде больше. Ни маски во весь
+   экран, ни фильтра: область задана испечённым полигоном, который
+   читается в шейдере как текстура. */
+.water {
   position: absolute;
   inset: 0;
-  z-index: 3;
+  z-index: 1;
   pointer-events: none;
-  overflow: hidden;
-  /* Плотность максимальна у источника и падает к верхней трети. */
-  -webkit-mask-image: linear-gradient(
-    to top,
-    #000 0%,
-    rgba(0, 0, 0, 0.72) 22%,
-    rgba(0, 0, 0, 0.26) 48%,
-    transparent 72%
-  );
-  mask-image: linear-gradient(
-    to top,
-    #000 0%,
-    rgba(0, 0, 0, 0.72) 22%,
-    rgba(0, 0, 0, 0.26) 48%,
-    transparent 72%
-  );
 }
 
-.flow__c {
+.water__c {
   position: absolute;
-  top: -100%;
-  height: 300%;
-  background-repeat: repeat-y;
-  background-size: 100% 33.3333%;
-  will-change: transform;
-  animation: rise linear infinite;
 }
 
-@keyframes rise {
-  from {
-    transform: translate3d(0, 0, 0);
-  }
-  to {
-    transform: translate3d(0, -33.3333%, 0);
-  }
-}
-
-/* Слой 2 — вордмарк. */
-.wm {
+/* ── Заголовок на линии воды ──────────────────────────────────────────
+   Кегль и трекинг проставляет JS по фактической ширине строк: формула
+   от числа знаков врёт на любой гарнитуре с переменными ширинами. */
+.hero__title {
   position: absolute;
+  z-index: 2;
   left: 0;
   right: 0;
-  z-index: 2;
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  padding-inline: clamp(10px, 1.4vw, 26px);
+  /* Нижняя кромка набора стоит на линии воды. Ниже начинается
+     отражение, и оно обязано начинаться ровно от неё. */
+  top: var(--water-line, 57%);
+  transform: translateY(-100%);
+  margin: 0;
   font-family: var(--font-display);
   font-weight: var(--display-w);
-  line-height: 1;
-  color: var(--steam);
+  font-size: 8vw;
+  line-height: 0.86;
+  text-align: center;
+  color: var(--hero-ink);
   pointer-events: none;
   user-select: none;
-  /* Кегль вписывается и в высоту (20svh на литеру), и в ширину экрана. */
-  --wm-size: min(
-    calc(20svh / var(--wm-cap)),
-    calc((100vw - 2 * clamp(10px, 1.4vw, 26px)) / var(--wm-sum) * 0.94)
-  );
-  font-size: var(--wm-size);
-  /* Обрезки нет. Слово стоит целиком, между нижней кромкой литеры и
-     краем экрана лежит 5svh воздуха. `--wm-drop` — расстояние от низа
-     строчного бокса до базовой линии, его и вычитаем. */
-  bottom: calc(5svh - var(--wm-drop) * var(--wm-size));
 }
 
-.wm span {
+.hero__title .ln {
   display: block;
+  /* Строка приезжает снизу, поэтому её нужно чем-то обрезать. Но при
+     плотном межстрочном литеры Кудряшева выходят за область содержимого
+     и обрезка съедала им низ (3.2 px на кегле 283). Поле снизу добавляет
+     обрезающему боксу высоты, отрицательный отступ снимает эту высоту из
+     потока — набор стоит на прежнем месте, а низ литеры цел. */
+  overflow: hidden;
+  padding-bottom: 0.1em;
+  margin-bottom: -0.1em;
 }
 
-/* Объёмный пар: холст лежит на месте слоя пара и содержит внутри себя
-   и клубы, и вордмарк — глубина решается маршем, а не порядком слоёв. */
-.page {
-  position: relative;
-}
-
-/* Холст объёма начинается вместе с героем и заходит ниже него —
-   там пар вытекает в следующий блок и растворяется. */
-.steamgl {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 100svh;
-  z-index: 3;
-  pointer-events: none;
-}
-
-.steamgl__c {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  will-change: opacity;
-}
-
-/* Объём поднялся — слово рисует он сам, разметочный вордмарк уходит.
-   Вернётся, если сторож погасит симуляцию по фактическому fps.
-   Испечённый поток при этом остаётся: он держит нижний регистр
-   плотности, а объём кладётся поверх. */
-.hero__stage[data-gl='1'] .wm {
-  opacity: 0;
-}
-
-/* При живом объёме испечённый поток снимается из кадра совсем. Он давал
-   повторяющийся горизонтальный ритм — ту самую «наложенную текстуру» —
-   и стоил маски во весь экран плюс семи бесконечных анимаций. */
-.hero__stage[data-gl='1'] .flow {
-  display: none;
-}
-
-/* Слой 4 — текст героя. */
-.hero__copy {
-  position: absolute;
-  z-index: 4;
-  left: 0;
-  right: 0;
-  top: 50%;
-  transform: translateY(-58%);
-}
-
-.hero__grid {
-  width: 100%;
-  max-width: var(--maxw);
-  margin-inline: auto;
-  padding-inline: var(--pad);
-}
-
-.hero h1 {
-  font-family: var(--font-display);
-  font-weight: var(--display-w);
-  font-size: var(--t-hero);
-  line-height: 0.94;
-  letter-spacing: 0.005em;
-  margin: 0 0 clamp(18px, 2vh, 30px);
-  max-width: 13ch;
-}
-
-/* Выезда строки из-под маски больше нет — заголовок проясняется как
-   запотевшее стекло. Обрезки нет и обрезать нечего. */
-.hero h1 .ln {
-  display: block;
-}
-
-/* Литера стоит дважды: чёткая и мутная, обе на своём месте. */
-.gl {
-  position: relative;
+.hero__title .ln > i {
   display: inline-block;
   font-style: normal;
   white-space: pre;
 }
 
-.gl__s,
-.gl__f {
-  display: block;
-  font-weight: inherit;
-}
-
-/* Мутный слой. Не фильтр: тень текста с постоянным радиусом рисуется
-   вместе с набором и ничего не пересчитывает в кадре. Радиус не
-   анимируется — по концу входа слой снимается целиком. */
-.gl__f {
+/* ── Нижняя строка ────────────────────────────────────────────────────
+   Одна строка во всю ширину: режим слева, запись по центру, род
+   занятий справа. Кегль мелкий, трекинг крупный. */
+.hero__foot {
   position: absolute;
-  inset: 0;
-  color: transparent;
-  text-shadow:
-    0 0 0.055em color-mix(in oklab, var(--steam) 92%, transparent),
-    0 0 0.14em color-mix(in oklab, var(--steam) 78%, transparent),
-    0 0 0.34em color-mix(in oklab, var(--steam) 46%, transparent);
-}
-
-.hero__lead {
-  font-size: var(--t-lead);
-  line-height: 1.5;
-  color: color-mix(in oklab, var(--steam) 82%, transparent);
-  max-width: 30ch;
-  margin: 0 0 clamp(22px, 3vh, 38px);
-}
-
-.hero__acts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-/* Тонкая подсказка «листайте». */
-.hero__hint {
-  position: absolute;
-  z-index: 4;
-  right: var(--pad);
-  bottom: calc(12svh);
-  writing-mode: vertical-rl;
+  z-index: 2;
+  left: 0;
+  right: 0;
+  bottom: clamp(18px, 3.4svh, 40px);
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--gut);
+  padding-inline: var(--pad);
   font-size: var(--t-cap);
-  letter-spacing: 0.3em;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: color-mix(in oklab, var(--steam) 55%, transparent);
+  color: var(--hero-ink);
+}
+
+/* Ячейки прижаты к своему краю, а не растянуты по колонке: растянутая
+   ячейка тянет за собой и рамку, по которой считается контраст. */
+.hero__hours {
+  justify-self: start;
+}
+
+.hero__tag {
+  justify-self: end;
+  text-align: right;
+}
+
+/* Кнопка в кадре одна. Тёмная заливка на светлом камне — тот же
+   принцип, что и у навигации: чернила выбираются под землю. */
+.btn--hero {
+  --btn-bg: var(--ink);
+  --btn-fg: var(--steam);
+  letter-spacing: 0.16em;
 }
 
 /* ══════════════════════════════════════════════════ плавающая кнопка ═ */
@@ -1803,46 +1624,28 @@ img {
 }
 
 /* ═══════════════════════════════════════ стартовые позиции для входа ═══ */
-/* Задаются в CSS, а не в JS: иначе кадр успевает мигнуть до старта GSAP. */
-.hero__veil {
-  position: absolute;
-  inset: 0;
-  background: var(--stone-900);
-}
+/* Задаются в CSS, а не в JS: иначе кадр успевает мигнуть до старта GSAP.
+   Вуали и штор нет: фотография отрисована сразу и ничем не закрыта —
+   приходит только набор. */
 
-/* Скрыты только в живом герое — витрина /fonts показывает кадр как есть. */
+/* Скрыто только в живом герое — витрина /fonts показывает кадр как есть. */
 .js-in {
   opacity: 0;
 }
 
-.hero:not(.still) .wm span,
-.hero:not(.still) h1 .ln > span {
-  transform: translateY(128%);
-}
-
-.hero.still .flow__c {
-  animation: none;
-}
-
-.hero:not(.still) .steam__l,
-.hero:not(.still) .hero__hint {
-  opacity: 0;
+.hero:not(.still) .ln > i {
+  /* 132, а не 118: у обрезающего бокса появилось поле снизу, и на 118 %
+     верхушки литер выглядывали бы из-под кромки до старта. */
+  transform: translateY(132%);
 }
 
 /* Без JS сайт обязан остаться работоспособным. */
-.no-js .js-in,
-.no-js .steam__l,
-.no-js .hero__hint {
+.no-js .js-in {
   opacity: 1;
 }
 
-.no-js .wm span,
-.no-js .hero h1 .ln > span {
+.no-js .ln > i {
   transform: none;
-}
-
-.no-js .hero__veil {
-  display: none;
 }
 
 /* ═══════════════════════════════════════════════════ витрина /fonts ═══ */
@@ -2075,52 +1878,33 @@ img {
     display: none;
   }
 
-  .hero__copy {
-    top: auto;
-    bottom: 26svh;
-    transform: none;
+  /* Мобильный кадр — другой снимок, и земля в нём распределена иначе:
+     верх светлый (светлота 0.89 под шапкой, 0.63 в полосе заголовка),
+     а низ — тёмная вода (0.047). Одними чернилами обойтись нельзя, и
+     подложку ставить нельзя тоже, поэтому чернила идут за землёй:
+     заголовок остаётся почти чёрным (13.6:1), нижняя строка
+     переворачивается в пар (10.9:1). Замерено, не на глаз. */
+  .hero__foot {
+    color: var(--steam);
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    /* Столбец прижат ниже и собран плотнее: у мобильного кадра вода
+       темнеет к нижней кромке, и верхняя строка столбца попадала на
+       светлый блик — 3.9:1 при требовании 4.5:1. */
+    gap: clamp(7px, 1.3svh, 13px);
+    bottom: clamp(10px, 1.8svh, 22px);
+    text-align: center;
   }
 
-  /* Заголовок обязан лечь в две строки — как в макете. */
-  .hero h1 {
-    max-width: none;
-    font-size: min(8.9vw, 2.5rem);
+  .hero__tag {
+    justify-self: center;
+    text-align: center;
   }
 
-  .hero h1 .ln {
-    white-space: nowrap;
-  }
-
-  .hero__lead {
-    max-width: 26ch;
-  }
-
-  /* На мобильной вордмарк вписан по ширине — 20svh не влезли бы
-     физически: пять литер в широком наборе шире экрана.            */
-  /* Мобильный кадр — другой, значит и маска бассейна другая. */
-  .hero__ripple {
-    -webkit-mask-image: var(--pool-m);
-    mask-image: var(--pool-m);
-  }
-
-  .wm {
-    --wm-size: min(
-      calc(13svh / var(--wm-cap)),
-      calc((100vw - 2 * 10px) / var(--wm-sum) * 0.96)
-    );
-    bottom: calc(5svh - var(--wm-drop) * var(--wm-size));
-    padding-inline: 10px;
-  }
-
-  /* Полоса пара рассчитана на 1920 — на 390 её надо увеличить,
-     иначе от клубов остаётся ровная серая кайма. */
-  .steam {
-    height: min(52svh, 460px);
-  }
-
-  .steam__l {
-    left: -90%;
-    width: 280%;
+  /* Кнопка на тёмной воде переворачивается вместе со строкой. */
+  .btn--hero {
+    --btn-bg: var(--steam);
+    --btn-fg: var(--ink);
   }
 
   .zone__in {
@@ -2186,11 +1970,6 @@ img {
     transition-duration: 1ms !important;
   }
 
-  /* Поток стоит: клубы на своих местах, кадр держится, движения нет. */
-  .flow__c {
-    animation: none !important;
-  }
-
   /* Мастер-таймлайна нет — значит и протяжённой сцены нет: герой
      разворачивается в обычный экран, следующая сцена идёт за ним
      обычным потоком документа, без наложения. */
@@ -2206,23 +1985,16 @@ img {
     margin-top: 0;
   }
 
-  .steam__l--cut {
-    -webkit-mask-image: none;
-    mask-image: none;
-  }
-
+  /* Герой: всё на своих местах сразу. Вода при этом не исчезает —
+     холст рисует ровно один кадр и больше не просыпается: рябь
+     застывшая, реакции на курсор нет. */
   .visit__drops,
   .venik,
-  .hero__veil,
-    /* Герой: всё на своих местах сразу. */
-  .js-in,
-  .hero:not(.still) .steam__l,
-  .hero:not(.still) .hero__hint {
+  .js-in {
     opacity: 1;
   }
 
-  .hero:not(.still) .wm span,
-  .hero:not(.still) h1 .ln > span {
+  .hero:not(.still) .ln > i {
     transform: none;
   }
 

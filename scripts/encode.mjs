@@ -15,13 +15,9 @@ const HERO = [
 ]
 // Конденсат — мягкий шум: он ничего не теряет от уменьшения и низкого q.
 const FLAT = [
-  { src: 'steam-1.png', q: 74, w: null },
-  { src: 'steam-2.png', q: 74, w: null },
-  { src: 'steam-3.png', q: 74, w: null },
   { src: 'fog.png', q: 58, w: 1000 },
   { src: 'frost.png', q: 62, w: 720 },
   { src: 'drip.png', q: 78, w: null },
-  { src: 'ripple.png', q: 72, w: null },
   { src: 'pool-desktop.png', q: 62, w: 1200 },
   { src: 'pool-mobile.png', q: 62, w: 700 },
 ]

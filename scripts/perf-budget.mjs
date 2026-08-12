@@ -1,8 +1,8 @@
 /**
  * Бюджет кадра: что стоит дорого в покое и на прокрутке.
  *
- * Меряется без объёмного пара (`?steam=off`) — иначе всё съедает
- * программный рендерер, и разницу в стоимости разметки не увидеть.
+ * Меряется без воды (`?water=off`) — иначе всё съедает программный
+ * рендерер контейнера, и разницу в стоимости разметки не увидеть.
  * Числа воспроизводимые: состав слоёв считается по вычисленным стилям,
  * частота кадров — по медиане межкадровых интервалов на скрипте прокрутки.
  */
@@ -20,7 +20,7 @@ const ctx = await b.newContext({
 const p = await ctx.newPage()
 p.setDefaultTimeout(600000)
 
-await p.goto('http://127.0.0.1:8099/termaa/?steam=off', { waitUntil: 'networkidle' })
+await p.goto('http://127.0.0.1:8099/termaa/?water=off', { waitUntil: 'networkidle' })
 await p.waitForTimeout(3000)
 
 /** Состав кадра в покое: что промотировано и что маскируется. */
@@ -87,29 +87,6 @@ const fps = async (label, from, to) => {
 }
 
 const doc = await p.evaluate(() => document.body.scrollHeight - window.innerHeight)
-
-// Боевой состав кадра: при живом объёме испечённый поток героя снимается
-// из кадра, и вместе с ним уходят семь анимаций и маска во весь экран.
-// Ставим этот флаг руками, чтобы посчитать состав без самого рейтмарчинга.
-await p.evaluate(() => {
-  document.querySelector('.hero__stage').dataset.gl = '1'
-})
-await p.waitForTimeout(500)
-const prod = await p.evaluate(() => {
-  let wc = 0
-  let masks = 0
-  for (const el of document.querySelectorAll('body *')) {
-    // Считаем только то, что реально в кадре: у снятого display:none
-    // вычисленные стили сохраняются, и он бы попал в счёт зря.
-    if (!el.getClientRects().length) continue
-    const cs = getComputedStyle(el)
-    if (cs.willChange && cs.willChange !== 'auto') wc++
-    const mi = cs.maskImage || cs.webkitMaskImage
-    if (mi && mi !== 'none') masks++
-  }
-  return { wc, masks }
-})
-console.log(`боевой состав: промотировано ${prod.wc} · масок ${prod.masks}`)
 
 await fps('прокрутка героя      ', 0, Math.round(doc * 0.14))
 await fps('прокрутка второй сцены', Math.round(doc * 0.18), Math.round(doc * 0.34))

@@ -3,7 +3,6 @@ import { Hero } from '@/components/Hero'
 import { Fab } from '@/components/Fab'
 import { SmoothScroll } from '@/components/SmoothScroll'
 import { Scene } from '@/components/Scene'
-import { SteamFlow } from '@/components/SteamFlow'
 import { BlockComplex } from '@/components/BlockComplex'
 import { BlockVisit } from '@/components/BlockVisit'
 import { BlockPrices } from '@/components/BlockPrices'
@@ -23,11 +22,6 @@ export default function Page() {
       <Header />
       <main className="page">
         <Hero />
-        {/* Поток проходит сквозь всю страницу и нигде не обрывается —
-            это связующее вещество, а не украшение сцены героя. */}
-        <div className="flow-page" aria-hidden="true">
-          <SteamFlow />
-        </div>
         <BlockComplex />
         <BlockVisit />
         <BlockPrices />
