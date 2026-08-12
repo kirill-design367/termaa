@@ -220,11 +220,12 @@ img {
   z-index: 1;
 }
 
-/* Первая сцена начинается там, где сцена героя отработала полностью:
-   слово растворилось, текст ушёл, пар заполнил кадр. Наложения нет —
-   переход делает пар, и делает его в конце героя, а не в начале. */
+/* Первая сцена входит в кадр в последней трети сцены героя — тогда,
+   когда слово уже растворилось, текст ушёл, а фронт пара уходит за
+   верхнюю кромку. Не на первых пикселях прокрутки и не после полной
+   остановки: перекрытие ровно такое, чтобы переход был непрерывным. */
 .sc-next {
-  margin-top: 0;
+  margin-top: -55svh;
 }
 
 /* ══════════════════════════════════════════════════ полотно страницы ═══
@@ -361,6 +362,79 @@ img {
   }
 }
 
+/* ── Кнопки героя: запотевшее стекло ──────────────────────────────────
+   Потёка здесь нет. Поверхность затуманена испечённым конденсатом; при
+   наведении запотевание сходит от центра к краям за 0.4 с, при уходе
+   курсора возвращается от краёв к центру.
+
+   Кольца, а не растущий прозрачный диск: диск пришлось бы закрашивать
+   цветом подложки, а у кнопки-призрака подложки нет — под ней фотография.
+   Три кольца с постоянными масками гаснут по очереди, и работает это на
+   любом фоне. Анимируется только непрозрачность. */
+.btn--glass .btn__fog {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-color: color-mix(in oklab, var(--stone-400) 46%, transparent);
+  background-image: var(--frost);
+  background-size: 190% auto;
+  background-position: center;
+  pointer-events: none;
+  transition: opacity 220ms var(--e-out) var(--d-in, 0ms);
+}
+
+.btn--glass .btn__fog:nth-of-type(1) {
+  --d-in: 0ms;
+  --d-out: 180ms;
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 0 30%, transparent 48%);
+  mask-image: radial-gradient(circle at 50% 50%, #000 0 30%, transparent 48%);
+}
+
+.btn--glass .btn__fog:nth-of-type(2) {
+  --d-in: 90ms;
+  --d-out: 90ms;
+  -webkit-mask-image: radial-gradient(
+    circle at 50% 50%,
+    transparent 0 28%,
+    #000 46% 62%,
+    transparent 80%
+  );
+  mask-image: radial-gradient(
+    circle at 50% 50%,
+    transparent 0 28%,
+    #000 46% 62%,
+    transparent 80%
+  );
+}
+
+.btn--glass .btn__fog:nth-of-type(3) {
+  --d-in: 180ms;
+  --d-out: 0ms;
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, transparent 0 58%, #000 78%);
+  mask-image: radial-gradient(circle at 50% 50%, transparent 0 58%, #000 78%);
+}
+
+.btn--glass:hover .btn__fog,
+.btn--glass:focus-visible .btn__fog {
+  opacity: 0;
+}
+
+/* Затуманивается обратно от краёв к центру — порядок задержек обратный. */
+.btn--glass .btn__fog {
+  transition-delay: var(--d-out, 0ms);
+}
+
+.btn--glass:hover .btn__fog,
+.btn--glass:focus-visible .btn__fog {
+  transition-delay: var(--d-in, 0ms);
+}
+
+/* Потёка на кнопках героя нет: у них своя механика. */
+.btn--glass::before,
+.btn--glass::after {
+  content: none;
+}
+
 /* Капля срывается не в одной и той же точке — иначе приём читается как
    механика интерфейса, а не как вода. Смещение задаётся по порядку. */
 .btn:nth-of-type(2n),
@@ -486,16 +560,24 @@ img {
 .hdr::before {
   content: '';
   position: absolute;
-  inset: 0 0 -125% 0;
+  inset: 0 0 -240% 0;
   pointer-events: none;
+  /* Тень мягкая и длинная, а не плашка у самой кромки: у верхнего края
+     она слабее, максимум приходится ровно на строку навигации, дальше
+     хвост тянется втрое дольше высоты шапки и сходит в ноль. Плотность
+     выведена из требования 4.5:1 для текста в 11 px — фон под меню не
+     светлее 110 уровней. */
   background: linear-gradient(
     to bottom,
     color-mix(in oklab, var(--ink) 54%, transparent) 0%,
-    color-mix(in oklab, var(--ink) 44%, transparent) 26%,
-    color-mix(in oklab, var(--ink) 16%, transparent) 58%,
+    color-mix(in oklab, var(--ink) 67%, transparent) 18%,
+    color-mix(in oklab, var(--ink) 56%, transparent) 32%,
+    color-mix(in oklab, var(--ink) 24%, transparent) 56%,
+    color-mix(in oklab, var(--ink) 8%, transparent) 78%,
     transparent 100%
   );
 }
+
 
 /* Плотная подложка появляется, когда шапка сходит с кадра героя.
    Без backdrop-filter: живой фильтр во всю ширину экрана остаётся
@@ -584,11 +666,51 @@ img {
 }
 
 /* Слой 1 — фон. Отрицательный inset — запас под параллакс по курсору
-   (амплитуда до 12 px), чтобы у кадра не открывался край. */
+   (амплитуда до 12 px) и под собственный дрейф кадра, чтобы у него не
+   открывался край. */
 .hero__bg {
   position: absolute;
-  inset: -1.4%;
+  inset: -2.2%;
   will-change: transform;
+}
+
+/* Внутренний узел дрейфует сам, внешний ведёт мастер-таймлайн: две
+   анимации на одном узле дрались бы за transform. */
+.hero__frame {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+
+/* Рябь по воде. Область — испечённая маска бассейна, снятая полигоном
+   с самого кадра. Слой едет трансформом, плитка стыкуется по обеим осям,
+   поэтому цикла не видно. */
+.hero__ripple {
+  position: absolute;
+  inset: -6% -6% -6% -6%;
+  background-image: var(--ripple);
+  background-repeat: repeat;
+  background-size: 46% auto;
+  opacity: 0.5;
+  mix-blend-mode: soft-light;
+  pointer-events: none;
+  -webkit-mask-image: var(--pool);
+  mask-image: var(--pool);
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  animation: ripple 26s linear infinite;
+  will-change: transform;
+}
+
+@keyframes ripple {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-46%, -2.6%, 0);
+  }
 }
 
 .hero__bg img {
@@ -675,16 +797,16 @@ img {
   color: var(--steam);
   pointer-events: none;
   user-select: none;
-  /* Кегль вписывается и в высоту (22vh на литеру), и в ширину экрана.  */
-  font-size: min(
-    calc(22svh / var(--wm-cap)),
+  /* Кегль вписывается и в высоту (20svh на литеру), и в ширину экрана. */
+  --wm-size: min(
+    calc(20svh / var(--wm-cap)),
     calc((100vw - 2 * clamp(10px, 1.4vw, 26px)) / var(--wm-sum) * 0.94)
   );
-  /* Обрезка нижней кромкой вьюпорта — ровно на треть высоты литеры.    */
-  bottom: calc(var(--wm-drop) * -1 * min(
-    calc(22svh / var(--wm-cap)),
-    calc((100vw - 2 * clamp(10px, 1.4vw, 26px)) / var(--wm-sum) * 0.94)
-  ));
+  font-size: var(--wm-size);
+  /* Обрезки нет. Слово стоит целиком, между нижней кромкой литеры и
+     краем экрана лежит 5svh воздуха. `--wm-drop` — расстояние от низа
+     строчного бокса до базовой линии, его и вычитаем. */
+  bottom: calc(5svh - var(--wm-drop) * var(--wm-size));
 }
 
 .wm span {
@@ -759,20 +881,38 @@ img {
   max-width: 13ch;
 }
 
+/* Выезда строки из-под маски больше нет — заголовок проясняется как
+   запотевшее стекло. Обрезки нет и обрезать нечего. */
 .hero h1 .ln {
   display: block;
-  /* Маска нужна для выезда строки, но при межстрочном в единицу она
-     срезала выносные: у Кудряшева они длиннее области содержимого.
-     Коробку опускаем на 0.18em, раскладку возвращаем отрицательным
-     полем — стартовое смещение строки увеличено соответственно. */
-  overflow: hidden;
-  padding-bottom: 0.18em;
-  margin-bottom: -0.18em;
 }
 
-.hero h1 .ln > span {
+/* Литера стоит дважды: чёткая и мутная, обе на своём месте. */
+.gl {
+  position: relative;
+  display: inline-block;
+  font-style: normal;
+  white-space: pre;
+}
+
+.gl__s,
+.gl__f {
   display: block;
-  will-change: transform;
+  font-weight: inherit;
+  will-change: opacity;
+}
+
+/* Мутный слой. Не фильтр: тень текста с постоянным радиусом рисуется
+   вместе с набором и ничего не пересчитывает в кадре. Радиус не
+   анимируется — по концу входа слой снимается целиком. */
+.gl__f {
+  position: absolute;
+  inset: 0;
+  color: transparent;
+  text-shadow:
+    0 0 0.055em color-mix(in oklab, var(--steam) 92%, transparent),
+    0 0 0.14em color-mix(in oklab, var(--steam) 78%, transparent),
+    0 0 0.34em color-mix(in oklab, var(--steam) 46%, transparent);
 }
 
 .hero__lead {
@@ -838,7 +978,6 @@ img {
   justify-content: space-between;
   gap: var(--gut);
   padding-block: clamp(56px, 8vh, 120px) clamp(24px, 4vh, 52px);
-  border-bottom: 1px solid var(--rule);
 }
 
 /* ── Блок 1. Комплекс ─────────────────────────────────────────────── */
@@ -903,6 +1042,7 @@ img {
 .zone__in {
   position: relative;
   z-index: 1;
+  will-change: opacity, transform;
   height: 100%;
   width: 100%;
   max-width: var(--maxw);
@@ -912,24 +1052,6 @@ img {
   display: grid;
   grid-template-rows: auto 1fr auto;
   gap: clamp(20px, 4vh, 48px);
-}
-
-.zone__top {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--gut);
-  padding-bottom: clamp(12px, 2vh, 22px);
-  border-bottom: 1px solid var(--rule);
-}
-
-.zone__count {
-  margin: 0;
-  font-size: var(--t-cap);
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  color: var(--fg-mute);
-  font-variant-numeric: tabular-nums;
 }
 
 /* Температура — событие кадра: огромная цифра держит середину экрана,
@@ -1007,28 +1129,6 @@ img {
   transform: translateX(-130%);
   will-change: transform;
   pointer-events: none;
-}
-
-.zones__idx {
-  position: absolute;
-  z-index: 6;
-  left: var(--pad);
-  bottom: clamp(24px, 5vh, 56px);
-  display: flex;
-  gap: 10px;
-}
-
-.zones__idx i {
-  display: block;
-  width: 26px;
-  height: 2px;
-  background: color-mix(in oklab, var(--steam) 22%, transparent);
-  transform-origin: left;
-  transition: background var(--d-s) var(--e-out);
-}
-
-.zones__idx i[data-on='1'] {
-  background: var(--amber);
 }
 
 /* ── Блок 2. Визит ────────────────────────────────────────────────── */
@@ -2024,17 +2124,20 @@ img {
     max-width: 26ch;
   }
 
-  /* На мобильной вордмарк вписан по ширине — 22svh не влезли бы
+  /* На мобильной вордмарк вписан по ширине — 20svh не влезли бы
      физически: пять литер в широком наборе шире экрана.            */
+  /* Мобильный кадр — другой, значит и маска бассейна другая. */
+  .hero__ripple {
+    -webkit-mask-image: var(--pool-m);
+    mask-image: var(--pool-m);
+  }
+
   .wm {
-    font-size: min(
+    --wm-size: min(
       calc(13svh / var(--wm-cap)),
       calc((100vw - 2 * 10px) / var(--wm-sum) * 0.96)
     );
-    bottom: calc(var(--wm-drop) * -1 * min(
-      calc(13svh / var(--wm-cap)),
-      calc((100vw - 2 * 10px) / var(--wm-sum) * 0.96)
-    ));
+    bottom: calc(5svh - var(--wm-drop) * var(--wm-size));
     padding-inline: 10px;
   }
 

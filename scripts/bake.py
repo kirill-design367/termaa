@@ -11,7 +11,7 @@
 """
 import os
 import numpy as np
-from PIL import Image, ImageFilter
+from PIL import Image, ImageDraw, ImageFilter
 
 SRC = os.path.join(os.path.dirname(__file__), "..", "assets-src")
 OUT = os.path.join(os.path.dirname(__file__), "..", "public", "img")
@@ -19,7 +19,7 @@ os.makedirs(OUT, exist_ok=True)
 
 
 # ─────────────────────────────────────────────────────────────── грейдинг ────
-def grade(im: Image.Image, *, lift_shadows, warm, gain, gamma, sky_pull) -> Image.Image:
+def grade(im: Image.Image, *, lift_shadows, warm, gain, gamma, sky_pull, sky_lift=0.0) -> Image.Image:
     """Тёплый средний мир: снимаем стерильную холодную белизну исходника."""
     a = np.asarray(im.convert("RGB"), dtype=np.float32) / 255.0
 
@@ -31,10 +31,24 @@ def grade(im: Image.Image, *, lift_shadows, warm, gain, gamma, sky_pull) -> Imag
     # 2. Подтягиваем тени, чтобы кадр не проваливался в чёрное.
     a = lift_shadows + a * (1.0 - lift_shadows)
 
-    # 3. Гасим небо сверху — иначе шапка и белый текст в нём тонут.
+    # 3. Небо и горы сверху раскрываем. Гамма меньше единицы поднимает
+    #    полутона и при этом физически не может выбить света в белое —
+    #    множитель бы выбил. Верх кадра становится ясным, а не глухим.
     h = a.shape[0]
-    ramp = np.linspace(1.0 - sky_pull, 1.0, h, dtype=np.float32) ** 1.6
-    a *= ramp[:, None, None]
+    if sky_pull:
+        ramp = np.linspace(1.0 - sky_pull, 1.0, h, dtype=np.float32) ** 1.6
+        a *= ramp[:, None, None]
+    if sky_lift:
+        # Подъём приходится на горы и середину кадра, а не на самую
+        # верхнюю кромку. Иначе небо за навигацией выбивается в белое, и
+        # белый текст на нём не держит 4.5:1 ни при какой тени.
+        # Кривая обязана сходить в ноль на ОБЕИХ кромках кадра. Первая
+        # версия обнулялась на 0.78 высоты и ниже не действовала — это
+        # давало ровную тональную ступень поперёк кадра, то есть шов.
+        t = np.linspace(0.0, 1.0, h, dtype=np.float32)
+        bump = np.sin(np.pi * t) ** 0.6
+        gam = 1.0 - sky_lift * bump
+        a = np.clip(a, 0.0, 1.0) ** gam[:, None, None]
 
     # 4. Лёгкая десатурация в светах: пар должен остаться серо-белым.
     lum = (a * np.array([0.2126, 0.7152, 0.0722], np.float32)).sum(-1, keepdims=True)
@@ -263,6 +277,42 @@ def build_condensation():
     to_png(np.clip(veil, 0, 1), (235, 230, 220), 1.4, f"{OUT}/frost.png")
 
 
+def build_pool_mask(size, poly, name: str):
+    """
+    Маска области бассейна.
+
+    Область задана полигоном в долях кадра и растушёвана: снимать её со
+    светлоты нельзя — после осветления вода стала светлее переплётов
+    павильона, и порог по яркости выбирал именно переплёты.
+    """
+    w, h = size
+    m = Image.new("L", (w, h), 0)
+    ImageDraw.Draw(m).polygon([(x * w, y * h) for x, y in poly], fill=255)
+    a = np.asarray(m, np.float32) / 255.0
+    to_png(a, (255, 255, 255), max(w, h) * 0.012, f"{OUT}/{name}.png")
+
+
+def build_ripple():
+    """
+    Рябь: горизонтальные волновые полосы, плитка стыкуется по обеим осям.
+    Кладётся поверх воды по маске и едет трансформом — своего движения
+    у воды на фотографии нет, а кадр обязан быть живым.
+    """
+    w, h = 512, 512
+    yy = np.arange(h)[:, None] / h
+    xx = np.arange(w)[None, :] / w
+    a = np.zeros((h, w), np.float32)
+    rng = np.random.default_rng(5)
+    # Целые числа периодов — иначе плитка не сойдётся.
+    for kx, ky, amp in ((3, 7, 1.0), (5, 11, 0.6), (2, 17, 0.45), (8, 5, 0.3)):
+        ph = rng.uniform(0, 2 * np.pi)
+        a += np.sin(2 * np.pi * (kx * xx + ky * yy) + ph) * amp
+    a = a / 2.35
+    # Гребни ярче впадин: вода бликует, а не колышется синусоидой.
+    a = np.clip(a, 0, 1) ** 2.1
+    to_png(a * 0.5, (246, 248, 250), 1.6, f"{OUT}/ripple.png")
+
+
 def build_drip():
     """
     Потёк для наведения: капля идёт по запотевшему стеклу сверху вниз
@@ -316,9 +366,9 @@ def main():
     # притенение неба снято почти полностью. Горы и павильон обязаны
     # читаться отчётливо, серой пелены в кадре нет.
     gd = grade(desk, lift_shadows=0.022, warm=(0.026, 0.007, -0.026),
-               gain=(1.045, 1.005, 0.940), gamma=1.03, sky_pull=0.10)
+               gain=(1.045, 1.005, 0.940), gamma=1.03, sky_pull=0.0, sky_lift=0.30)
     gm = grade(mob, lift_shadows=0.022, warm=(0.026, 0.007, -0.026),
-               gain=(1.045, 1.005, 0.940), gamma=1.01, sky_pull=0.12)
+               gain=(1.045, 1.005, 0.940), gamma=1.01, sky_pull=0.0, sky_lift=0.28)
 
     gd.save(f"{OUT}/hero-desktop.png")
     gm.save(f"{OUT}/hero-mobile.png")
@@ -329,6 +379,14 @@ def main():
     # Две колонны потока: крупные ближние клубы и мелкие дальние.
     build_plume("plume-1", seed=21, n=26, r_lo=0.16, r_hi=0.34)
     build_plume("plume-2", seed=88, n=44, r_lo=0.07, r_hi=0.17)
+    build_ripple()
+    # Полигоны сняты по сетке с самих кадров, см. отчёт.
+    build_pool_mask(desk.size,
+                    [(0.0, 0.572), (0.60, 0.572), (0.665, 0.70),
+                     (0.685, 0.795), (0.0, 0.805)], "pool-desktop")
+    build_pool_mask(mob.size,
+                    [(0.0, 0.60), (0.40, 0.575), (0.72, 0.60),
+                     (0.86, 1.0), (0.0, 1.0)], "pool-mobile")
     print("готово →", OUT)
 
 

@@ -25,9 +25,11 @@ export const METRICS = raw as unknown as Record<string, Metrics>
  *   базовая линия от низа строки (line-height: 1) = 0.5 − (asc + desc) / 2
  *   плюс отрезаемая часть литеры                  = CROP × capHeight
  */
-// Срез нижней кромкой: лёгкий намёк на продолжение за кадром, а не
-// потеря букв. Слово стоит почти целиком.
-const CROP = 0.08
+// Обрезки больше нет. Слово стоит целиком, а между нижней кромкой
+// литеры и краем экрана лежит воздух — не меньше GAP от высоты экрана.
+const CROP = 0
+/** Отступ от нижней кромки литеры до края экрана, в долях высоты экрана. */
+export const WM_GAP = 0.05
 
 export const wordmarkDrop = (m: Metrics) =>
   +(0.5 - (m.ascR + m.descR) / 2 + CROP * m.capR).toFixed(4)

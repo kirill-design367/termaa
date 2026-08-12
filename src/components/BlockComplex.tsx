@@ -17,6 +17,11 @@ const SCRIM_OPEN = 0.45
  * предыдущей, между ними проходит тёмная вертикальная полоса — дверной
  * проём. Предыдущая зона уходит вглубь, а не вбок: это движение вперёд,
  * а не карусель.
+ *
+ * Смена разведена по времени, а не идёт всем сразу. Порядок жёсткий:
+ * сначала уходит текст уходящей зоны, потом под проёмом меняется кадр,
+ * и только потом приходит текст новой. Двух текстов в кадре не бывает
+ * ни в один момент — раньше они читались одновременно и задваивались.
  */
 export function BlockComplex() {
   const root = useRef<HTMLElement>(null)
@@ -26,21 +31,16 @@ export function BlockComplex() {
     if (!el) return
     const q = gsap.utils.selector(el)
     const zones = q<HTMLElement>('.zone')
+    const ins = q<HTMLElement>('.zone__in')
     const door = q<HTMLElement>('.door')[0]
-    const bars = q<HTMLElement>('.zones__idx i')
     const scrims = q<HTMLElement>('.zone__scrim')
-
-    const mark = (i: number) => bars.forEach((b, n) => (b.dataset.on = n <= i ? '1' : '0'))
 
     // Без движения зоны разворачиваются в список — это описано в CSS,
     // в @media (prefers-reduced-motion). Скрипту тут делать нечего.
-    if (reduced()) {
-      mark(ZONES.length - 1)
-      return
-    }
+    if (reduced()) return
 
-    gsap.set(zones.slice(1), { autoAlpha: 0, scale: 1.14, yPercent: 6 })
-    mark(0)
+    gsap.set(zones.slice(1), { autoAlpha: 0, scale: 1.12 })
+    gsap.set(ins.slice(1), { autoAlpha: 0, y: 24 })
 
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({
@@ -51,37 +51,40 @@ export function BlockComplex() {
           pin: true,
           scrub: 0.6,
           anticipatePin: 1,
-          onUpdate: (self) => {
-            mark(Math.min(ZONES.length - 1, Math.round(self.progress * (ZONES.length - 1))))
-          },
         },
       })
 
       for (let i = 1; i < zones.length; i++) {
         const at = i - 1
-        // Проём проходит быстро, смена происходит под ним.
-        // Уходящая зона не гаснет — её просто накрывает следующая:
-        // так две зоны не читаются одновременно дольше доли секунды.
-        // x обнуляется явно. Стартовая позиция описана в CSS как
-        // translateX(-130%), и GSAP разбирает её в пиксельный x — без
-        // обнуления он ложится поверх анимации xPercent, и проём вместо
-        // прохода паркуется посреди кадра. На тёмных зонах это было не
-        // видно, на фотографии — сразу.
-        // Конец 500 %, а не 130 %: при ширине 26vw проёму нужно 485 %,
-        // чтобы уйти за правую кромку целиком.
+
+        // 1. Текст уходящей зоны уходит первым и до конца.
+        tl.to(ins[i - 1], { autoAlpha: 0, y: -24, duration: 0.2, ease: 'power2.in' }, at)
+
+        // 2. Проём идёт по кадру и накрывает момент смены изображения.
+        //    x обнуляется явно: CSS-овский translateX(-130%) GSAP
+        //    разбирает в пиксельный x и без обнуления кладёт его поверх
+        //    анимации xPercent — проём паркуется посреди кадра.
+        //    Конец 500 %, а не 130 %: при ширине 26vw проёму нужно 485 %,
+        //    чтобы уйти за правую кромку целиком.
         tl.fromTo(
           door,
           { xPercent: -130, x: 0 },
-          { xPercent: 500, x: 0, duration: 0.62, ease: E.door },
-          at,
+          { xPercent: 500, x: 0, duration: 0.52, ease: E.door },
+          at + 0.16,
         )
-          .to(zones[i - 1], { scale: 0.9, duration: 0.6, ease: 'power2.in' }, at + 0.16)
-          .to(zones[i], { autoAlpha: 1, duration: 0.14, ease: 'none' }, at + 0.24)
-          .to(zones[i], { scale: 1, yPercent: 0, duration: 0.62, ease: E.out }, at + 0.24)
-          // На смене кадр открывается: затемнение уходит с 60 % до 45 %
-          // и возвращается, когда проём прошёл и текст снова читается.
-          .to(scrims, { opacity: SCRIM_OPEN, duration: 0.3, ease: 'none' }, at)
-          .to(scrims, { opacity: SCRIM, duration: 0.42, ease: 'none' }, at + 0.5)
+
+        // 3. Кадр меняется под проёмом, когда текста в кадре уже нет.
+        tl.to(zones[i - 1], { autoAlpha: 0, duration: 0.16, ease: 'none' }, at + 0.3)
+          .to(zones[i], { autoAlpha: 1, duration: 0.16, ease: 'none' }, at + 0.3)
+          .to(zones[i], { scale: 1, duration: 0.62, ease: E.out }, at + 0.3)
+
+        // 4. Текст новой зоны приходит последним.
+        tl.to(ins[i], { autoAlpha: 1, y: 0, duration: 0.26, ease: 'power2.out' }, at + 0.58)
+
+        // На смене кадр открывается: затемнение уходит с 60 % до 45 %
+        // и возвращается, когда проём прошёл и текст снова читается.
+        tl.to(scrims, { opacity: SCRIM_OPEN, duration: 0.26, ease: 'none' }, at + 0.16)
+          .to(scrims, { opacity: SCRIM, duration: 0.32, ease: 'none' }, at + 0.56)
       }
     }, el)
 
@@ -118,15 +121,6 @@ export function BlockComplex() {
           <div className="zone__scrim" aria-hidden="true" />
 
           <div className="zone__in">
-            <div className="zone__top">
-              <p className="eyebrow">Комплекс</p>
-              {/* Счётчик здесь несёт смысл: скролл — это проход внутрь,
-                  и знать, где ты в этом проходе, нужно. */}
-              <p className="zone__count">
-                Зона {i + 1} из {ZONES.length}
-              </p>
-            </div>
-
             <div className="zone__mid">
               <h2 className="zone__name">{z.name}</h2>
               <p className="temp zone__temp">
@@ -145,11 +139,6 @@ export function BlockComplex() {
 
       <div className="door" aria-hidden="true" />
 
-      <div className="zones__idx" aria-hidden="true">
-        {ZONES.map((z) => (
-          <i key={z.name} data-on="0" />
-        ))}
-      </div>
     </section>
   )
 }

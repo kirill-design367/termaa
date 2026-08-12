@@ -19,7 +19,12 @@ export function pairVars(pair: Pair): CSSProperties {
     '--wm-sum': wordmarkSum(d),
     '--wm-drop': wordmarkDrop(d),
     '--display-w': pair.displayWeight,
-    // Слой потёка для наведения: адрес учитывает basePath.
+    // Испечённые слои: адреса учитывают basePath, потому что webpack
+    // отказывается оставлять литеральный url() в CSS в покое.
     '--drip': `url(${A('/img/drip.webp')})`,
+    '--frost': `url(${A('/img/frost.webp')})`,
+    '--ripple': `url(${A('/img/ripple.webp')})`,
+    '--pool': `url(${A('/img/pool-desktop.webp')})`,
+    '--pool-m': `url(${A('/img/pool-mobile.webp')})`,
   } as CSSProperties
 }

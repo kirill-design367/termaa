@@ -8,8 +8,8 @@ import { heroProgress } from '@/lib/scene'
 import { bakeNoise3D } from '@/lib/steam/noise3d'
 import { VERT, FLOW_FRAG, VOLUME_FRAG, BLEND_FRAG } from '@/lib/steam/shaders'
 
-/** Срез нижней кромкой. Совпадает с CROP в fonts.ts. */
-const CROP = 0.08
+/** Отступ от нижней кромки литеры до края экрана, в долях высоты. */
+const GAP = 0.05
 /** Половинное разрешение марша. */
 const SCALE = 0.5
 const FLOW_W = 320
@@ -146,9 +146,13 @@ async function start(
   const layout = () => {
     const pad = Math.min(26, Math.max(10, W * 0.014))
     const sum = letters.reduce((a, c) => a + (m.adv[c] ?? 0.6), 0)
-    const size = Math.min((0.22 * H) / m.capR, ((W - 2 * pad) / sum) * 0.94)
+    // Кегль вписывается и в высоту (литера не выше 20 % экрана, чтобы
+    // вместе с отступом слово укладывалось в кадр), и в ширину.
+    const size = Math.min((0.2 * H) / m.capR, ((W - 2 * pad) / sum) * 0.94)
     const gap = (W - 2 * pad - sum * size) / (letters.length - 1)
-    return { pad, size, gap, baseline: H + CROP * m.capR * size }
+    // Обрезки нет: базовая линия поднята над нижней кромкой экрана
+    // ровно на GAP высоты экрана, слово стоит целиком.
+    return { pad, size, gap, baseline: H - GAP * H }
   }
 
   const paintWord = (ctx: CanvasRenderingContext2D, s: number, dy = 0) => {
