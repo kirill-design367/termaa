@@ -10,9 +10,13 @@ permissions:
   pages: write
   id-token: write
 
+# Группа одна на все ветки — двух одновременных выкладок Pages быть не
+# может. Но отменять начатую нельзя: пуш в main приходит через секунду
+# после пуша в ветку выкладки и гасил её прогон на середине. Один раз
+# из-за этого на бой не уехал готовый коммит. Второй прогон ждёт.
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -67,14 +71,19 @@ jobs:
 
   # Окружение github-pages пускает деплой только с веток, перечисленных
   # в его правиле «разрешённые ветки». Правило создаётся один раз при
-  # включении Pages и сменой ветки по умолчанию не переписывается,
-  # поэтому здесь список, а не сравнение с дефолтом: пока владелец не
-  # добавит main в настройках окружения, выкладку тянет старая ветка.
+  # включении Pages и сменой ветки по умолчанию НЕ переписывается —
+  # поэтому здесь одно имя ветки, а не сравнение с дефолтом.
+  #
+  # Сравнение с дефолтом здесь уже стояло и давало красный прогон на
+  # каждый пуш в main: ветка дефолтная, а окружение её не пускает, и
+  # задание падало за две секунды ещё до раннера. Чинится это не в
+  # workflow, а одним действием владельца:
+  #   Settings → Environments → github-pages → Deployment branches,
+  # добавить main. После этого имя ниже можно заменить на
+  # `github.event.repository.default_branch`.
   deploy:
     needs: build
-    if: >-
-      github.ref_name == github.event.repository.default_branch ||
-      github.ref_name == 'claude/terma-premium-resort-1l96x2'
+    if: github.ref_name == 'claude/terma-premium-resort-1l96x2'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
