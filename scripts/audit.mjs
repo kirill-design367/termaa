@@ -104,9 +104,11 @@ for (const v of VIEWS) {
     // Первый вопрос раскрыт по умолчанию — клик его закрывает.
     // Чтобы проверять именно раскрытие, сначала приводим к закрытому.
     const open = await qs[i].evaluate((b) => b.getAttribute('aria-expanded') === 'true')
-    if (open) { await qs[i].click(); await page.waitForTimeout(450) }
+    if (open) { await qs[i].click(); await page.waitForTimeout(700) }
     await qs[i].click()
-    await page.waitForTimeout(650)
+    // Переход раскрытия идёт 620 мс; на большом вьюпорте кадр успевает
+    // отстать, и замер на 650 мс ловил его на полпути. Ждём с запасом.
+    await page.waitForTimeout(1000)
     const h = await page.evaluate((n) => {
       const w = document.querySelectorAll('.faq__wrap')[n]
       return w ? w.getBoundingClientRect().height : -1

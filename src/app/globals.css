@@ -23,9 +23,10 @@
   --water: #121a16; /* тёмная зелёно-чёрная вода      */
   --water-2: #1d2a23;
   --sky: #a2b2b9; /* холодное небо                  */
-  --wood: #7c5c3e; /* тёплое дерево                  */
-  --amber: #e0a45c; /* единственный акцент            */
-  --amber-hot: #f2b463;
+  /* Цветного акцента в проекте нет. Янтарный и тёплое дерево выведены
+     по прямому указанию арт-директора: где нужен акцент — свет и
+     контраст, а не цвет. Токены оставлены пустыми намеренно, чтобы
+     случайная ссылка на них не собралась в цвет. */
 
   /* ── Роли. Переключаются темой секции, а не переписываются. ─────── */
   --fg: var(--ink);
@@ -109,7 +110,7 @@ body {
 }
 
 ::selection {
-  background: var(--amber);
+  background: var(--steam);
   color: var(--ink);
 }
 
@@ -126,7 +127,7 @@ select {
 }
 
 :focus-visible {
-  outline: 2px solid var(--amber);
+  outline: 2px solid var(--steam);
   outline-offset: 3px;
   border-radius: 2px;
 }
@@ -192,7 +193,7 @@ img {
 .temp {
   font-family: var(--font-display);
   font-weight: var(--display-w);
-  color: var(--amber);
+  color: var(--fg);
   font-variant-numeric: lining-nums tabular-nums;
   line-height: 0.82;
 }
@@ -288,7 +289,6 @@ img {
     transform var(--d-s) var(--e-out),
     color var(--d-s) var(--e-out),
     border-color var(--d-s) var(--e-out);
-  will-change: transform;
 }
 
 .btn > span {
@@ -362,76 +362,86 @@ img {
   }
 }
 
-/* ── Кнопки героя: запотевшее стекло ──────────────────────────────────
-   Потёка здесь нет. Поверхность затуманена испечённым конденсатом; при
-   наведении запотевание сходит от центра к краям за 0.4 с, при уходе
-   курсора возвращается от краёв к центру.
+/* ── Кнопки героя: испарение по буквам ────────────────────────────────
+   Ни колец, ни дисков, ни масок — они и стоили дорого. Литеры по одной
+   приподнимаются и на мгновение мутнеют, потом возвращаются чёткими.
+   Волна слева направо, сдвиг 0.03 с, весь цикл 0.5 с. Едут только
+   transform и opacity; мутность — тень текста с постоянным радиусом. */
+.pf {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  white-space: pre;
+}
 
-   Кольца, а не растущий прозрачный диск: диск пришлось бы закрашивать
-   цветом подложки, а у кнопки-призрака подложки нет — под ней фотография.
-   Три кольца с постоянными масками гаснут по очереди, и работает это на
-   любом фоне. Анимируется только непрозрачность. */
-.btn--glass .btn__fog {
+.pf__l {
+  position: relative;
+  display: inline-block;
+  font-weight: inherit;
+}
+
+.pf__s,
+.pf__f {
+  display: block;
+  font-weight: inherit;
+}
+
+.pf__f {
   position: absolute;
   inset: 0;
-  border-radius: inherit;
-  background-color: color-mix(in oklab, var(--stone-400) 46%, transparent);
-  background-image: var(--frost);
-  background-size: 190% auto;
-  background-position: center;
-  pointer-events: none;
-  transition: opacity 220ms var(--e-out) var(--d-in, 0ms);
-}
-
-.btn--glass .btn__fog:nth-of-type(1) {
-  --d-in: 0ms;
-  --d-out: 180ms;
-  -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 0 30%, transparent 48%);
-  mask-image: radial-gradient(circle at 50% 50%, #000 0 30%, transparent 48%);
-}
-
-.btn--glass .btn__fog:nth-of-type(2) {
-  --d-in: 90ms;
-  --d-out: 90ms;
-  -webkit-mask-image: radial-gradient(
-    circle at 50% 50%,
-    transparent 0 28%,
-    #000 46% 62%,
-    transparent 80%
-  );
-  mask-image: radial-gradient(
-    circle at 50% 50%,
-    transparent 0 28%,
-    #000 46% 62%,
-    transparent 80%
-  );
-}
-
-.btn--glass .btn__fog:nth-of-type(3) {
-  --d-in: 180ms;
-  --d-out: 0ms;
-  -webkit-mask-image: radial-gradient(circle at 50% 50%, transparent 0 58%, #000 78%);
-  mask-image: radial-gradient(circle at 50% 50%, transparent 0 58%, #000 78%);
-}
-
-.btn--glass:hover .btn__fog,
-.btn--glass:focus-visible .btn__fog {
+  color: transparent;
   opacity: 0;
+  text-shadow:
+    0 0 0.06em currentColor,
+    0 0 0.16em currentColor,
+    0 0 0.34em color-mix(in oklab, currentColor 55%, transparent);
 }
 
-/* Затуманивается обратно от краёв к центру — порядок задержек обратный. */
-.btn--glass .btn__fog {
-  transition-delay: var(--d-out, 0ms);
+.btn--puff:hover .pf__s,
+.btn--puff:focus-visible .pf__s {
+  animation: puffRise 500ms var(--e-out) 1;
+  animation-delay: calc(var(--i) * 0.03s);
 }
 
-.btn--glass:hover .btn__fog,
-.btn--glass:focus-visible .btn__fog {
-  transition-delay: var(--d-in, 0ms);
+.btn--puff:hover .pf__f,
+.btn--puff:focus-visible .pf__f {
+  animation: puffFog 500ms var(--e-out) 1;
+  animation-delay: calc(var(--i) * 0.03s);
+}
+
+@keyframes puffRise {
+  0% {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+  38% {
+    transform: translate3d(0, -3px, 0);
+    opacity: 0.12;
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+}
+
+@keyframes puffFog {
+  0% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0;
+  }
+  38% {
+    transform: translate3d(0, -3px, 0);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate3d(0, -6px, 0);
+    opacity: 0;
+  }
 }
 
 /* Потёка на кнопках героя нет: у них своя механика. */
-.btn--glass::before,
-.btn--glass::after {
+.btn--puff::before,
+.btn--puff::after {
   content: none;
 }
 
@@ -455,7 +465,6 @@ img {
 .hdr__link b {
   display: inline-block;
   font-weight: inherit;
-  will-change: transform;
   transition: transform var(--d-s) var(--e-out);
   transition-delay: calc(var(--i) * 0.02s);
 }
@@ -602,7 +611,15 @@ img {
   opacity: 1;
 }
 
+.hdr[data-stuck='1'] .hdr__mark {
+  opacity: 1;
+}
+
+/* На первом экране вордмарка в шапке нет: слово стоит во всю ширину
+   кадра. Он проявляется, когда герой уходит, и дальше стоит постоянно. */
 .hdr__mark {
+  opacity: 0;
+  transition: opacity var(--d-m) var(--e-out);
   font-family: var(--font-display);
   font-weight: var(--display-w);
   font-size: clamp(0.9rem, 1.05vw, 1.1rem);
@@ -662,7 +679,6 @@ img {
   height: 100svh;
   min-height: 560px;
   overflow: hidden;
-  will-change: transform;
 }
 
 /* Слой 1 — фон. Отрицательный inset — запас под параллакс по курсору
@@ -811,7 +827,6 @@ img {
 
 .wm span {
   display: block;
-  will-change: transform;
 }
 
 /* Объёмный пар: холст лежит на месте слоя пара и содержит внутри себя
@@ -848,10 +863,11 @@ img {
   opacity: 0;
 }
 
-/* Испечённый поток под объёмом ослабляется, чтобы они не складывались
-   в ту самую пелену, которой быть не должно. */
+/* При живом объёме испечённый поток снимается из кадра совсем. Он давал
+   повторяющийся горизонтальный ритм — ту самую «наложенную текстуру» —
+   и стоил маски во весь экран плюс семи бесконечных анимаций. */
 .hero__stage[data-gl='1'] .flow {
-  opacity: 0.42;
+  display: none;
 }
 
 /* Слой 4 — текст героя. */
@@ -899,7 +915,6 @@ img {
 .gl__f {
   display: block;
   font-weight: inherit;
-  will-change: opacity;
 }
 
 /* Мутный слой. Не фильтр: тень текста с постоянным радиусом рисуется
@@ -989,7 +1004,6 @@ img {
 .zone {
   position: absolute;
   inset: 0;
-  will-change: transform;
   /* Зона непрозрачна намеренно: она накрывает предыдущую, и кросс-фейд
      не нужен. Но её кромки давали ровную черту через весь кадр. */
   background: var(--stone-900);
@@ -1034,7 +1048,6 @@ img {
   background: var(--ink);
   opacity: 0.6;
   pointer-events: none;
-  will-change: opacity;
 }
 
 /* Кадр держится сам: линия сверху, имя и температура на общей базовой
@@ -1042,7 +1055,6 @@ img {
 .zone__in {
   position: relative;
   z-index: 1;
-  will-change: opacity, transform;
   height: 100%;
   width: 100%;
   max-width: var(--maxw);
@@ -1082,7 +1094,14 @@ img {
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
   gap: var(--gut);
   padding-top: clamp(14px, 2.4vh, 26px);
-  border-top: 1px solid var(--rule);
+}
+
+.zone__temp {
+  margin: 0 0 0.5em;
+  font-size: var(--t-cap);
+  letter-spacing: 0.24em;
+  color: var(--fg);
+  font-variant-numeric: lining-nums tabular-nums;
 }
 
 .zone__note {
@@ -1099,38 +1118,6 @@ img {
   max-width: 46ch;
 }
 
-.zone__temp {
-  font-size: clamp(5rem, 18vw, 18rem);
-  white-space: nowrap;
-  margin: 0;
-  align-self: center;
-  line-height: 0.78;
-}
-
-.zone__temp sup {
-  font-size: 0.3em;
-  vertical-align: super;
-  margin-left: 0.04em;
-}
-
-/* Дверной проём — тёмная вертикальная полоса между зонами. */
-.door {
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 26vw;
-  z-index: 5;
-  background: linear-gradient(
-    to right,
-    transparent,
-    var(--ink) 22%,
-    var(--ink) 78%,
-    transparent
-  );
-  transform: translateX(-130%);
-  will-change: transform;
-  pointer-events: none;
-}
-
 /* ── Блок 2. Визит ────────────────────────────────────────────────── */
 .visit {
   height: 100svh;
@@ -1143,7 +1130,6 @@ img {
   inset: 0;
   z-index: 2;
   pointer-events: none;
-  will-change: opacity;
   object-fit: cover;
   width: 100%;
   height: 100%;
@@ -1160,7 +1146,6 @@ img {
   inset: 0;
   display: flex;
   align-items: center;
-  will-change: transform, opacity;
 }
 
 .visit__in {
@@ -1189,7 +1174,7 @@ img {
   font-weight: var(--display-w);
   font-size: clamp(0.9rem, 1.1vw, 1.15rem);
   letter-spacing: 0.3em;
-  color: var(--amber);
+  color: var(--fg-mute);
   display: block;
   margin-bottom: 1.4em;
 }
@@ -1216,7 +1201,7 @@ img {
 .visit__gauge b {
   display: block;
   font-size: clamp(3.4rem, 9vw, 9rem);
-  color: var(--amber);
+  color: var(--fg);
   font-variant-numeric: tabular-nums;
 }
 
@@ -1244,7 +1229,6 @@ img {
     color-mix(in oklab, var(--steam) 22%, transparent) 30%,
     color-mix(in oklab, var(--steam) 72%, transparent)
   );
-  will-change: transform;
   pointer-events: none;
 }
 
@@ -1269,7 +1253,6 @@ img {
   top: 64%;
   width: clamp(260px, 30vw, 540px);
   transform: translate(-120%, -46%) rotate(-14deg);
-  will-change: transform;
   color: var(--fg);
   opacity: 0.34;
   pointer-events: none;
@@ -1307,15 +1290,14 @@ img {
   height: 100%;
   transform: scaleY(0);
   transform-origin: 50% 100%;
-  will-change: transform;
+  /* Столб набирает не цвет, а свет: от почти чёрного низа к белому
+     верху. Цветного акцента на сайте нет — акцент делает контраст. */
   background: linear-gradient(
     to top,
-    #16241f 0%,
-    #24413a 18%,
-    #4d5347 40%,
-    #7a6a52 62%,
-    #a67b46 82%,
-    var(--amber) 100%
+    color-mix(in oklab, var(--steam) 6%, transparent) 0%,
+    color-mix(in oklab, var(--steam) 14%, transparent) 34%,
+    color-mix(in oklab, var(--steam) 30%, transparent) 66%,
+    color-mix(in oklab, var(--steam) 62%, transparent) 100%
   );
 }
 
@@ -1337,7 +1319,6 @@ img {
   color: var(--steam);
   opacity: 0;
   transform: translateY(10px);
-  will-change: transform, opacity;
 }
 
 .col__cap {
@@ -1351,7 +1332,6 @@ img {
   justify-content: space-between;
   gap: 10px;
   opacity: 0;
-  will-change: opacity;
 }
 
 .col__price {
@@ -1396,7 +1376,6 @@ img {
   display: flex;
   gap: clamp(16px, 2vw, 34px);
   padding-inline: var(--pad);
-  will-change: transform;
 }
 
 .rev {
@@ -1406,7 +1385,6 @@ img {
   border-radius: clamp(16px, 1.6vw, 24px);
   background: var(--surface, color-mix(in oklab, var(--steam) 8%, transparent));
   border: 1px solid var(--rule);
-  will-change: transform;
 }
 
 .rev p {
@@ -1447,12 +1425,10 @@ img {
   max-width: 30ch;
 }
 
+/* Разделителей между вопросами нет: воздуха достаточно, чтобы список
+   читался списком. Горизонтальных линий во всю ширину на сайте нет. */
 .faq__item {
-  border-top: 1px solid var(--rule);
-}
-
-.faq__item:last-child {
-  border-bottom: 1px solid var(--rule);
+  padding-block: clamp(4px, 0.8vh, 10px);
 }
 
 .faq__q {
@@ -1560,7 +1536,6 @@ img {
   height: calc(100% + 28px);
   opacity: 1;
   transition: opacity 500ms var(--e-steam);
-  will-change: opacity;
 }
 
 .faq__q[aria-expanded='true'] + .faq__wrap .faq__mist {
@@ -1613,8 +1588,8 @@ img {
 }
 
 .route__dot--end {
-  fill: var(--amber);
-  stroke: var(--amber);
+  fill: var(--steam);
+  stroke: var(--steam);
 }
 
 .route__label {
@@ -1732,12 +1707,12 @@ img {
 
 /* Мягкая валидация: подсветка, без красных крестов. */
 .fld[data-miss='1'] .fld__in {
-  border-color: var(--amber);
-  background: color-mix(in oklab, var(--amber) 12%, transparent);
+  border-color: var(--steam);
+  background: color-mix(in oklab, var(--steam) 16%, transparent);
 }
 
 .fld[data-miss='1'] .fld__lab {
-  color: var(--amber);
+  color: var(--steam);
 }
 
 .book__done {
@@ -1756,7 +1731,6 @@ img {
 
 /* ═════════════════════════════════════════════════════════════ подвал ═ */
 .foot {
-  border-top: 1px solid var(--rule);
   padding-block: clamp(28px, 4vh, 48px);
   display: flex;
   flex-wrap: wrap;
@@ -1834,7 +1808,6 @@ img {
   position: absolute;
   inset: 0;
   background: var(--stone-900);
-  will-change: opacity;
 }
 
 /* Скрыты только в живом герое — витрина /fonts показывает кадр как есть. */
@@ -2032,7 +2005,6 @@ img {
 .visit__tone {
   position: absolute;
   inset: 0;
-  will-change: opacity;
 }
 
 .visit__drops {
@@ -2060,7 +2032,6 @@ img {
   height: 100%;
   margin-left: -7px;
   transform-origin: 50% 0%;
-  will-change: transform, opacity;
   background: linear-gradient(
     to bottom,
     transparent,
@@ -2163,11 +2134,6 @@ img {
     gap: clamp(6px, 1.4vh, 14px);
   }
 
-  .zone__temp {
-    order: -1;
-    font-size: clamp(3.4rem, 22vw, 5.6rem);
-  }
-
   .zone__bottom {
     grid-template-columns: minmax(0, 1fr);
     gap: 0.8em;
@@ -2248,11 +2214,7 @@ img {
   .visit__drops,
   .venik,
   .hero__veil,
-  .door {
-    display: none;
-  }
-
-  /* Герой: всё на своих местах сразу. */
+    /* Герой: всё на своих местах сразу. */
   .js-in,
   .hero:not(.still) .steam__l,
   .hero:not(.still) .hero__hint {
@@ -2280,10 +2242,6 @@ img {
     transform: none;
     visibility: visible;
     padding-block: clamp(48px, 9vh, 110px);
-  }
-
-  .zone + .zone {
-    border-top: 1px solid var(--rule);
   }
 
   .visit {

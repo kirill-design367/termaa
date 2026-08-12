@@ -36,6 +36,30 @@ function GlassLine({ text }: { text: string }) {
 }
 
 /**
+ * Надпись кнопки по литерам.
+ *
+ * При наведении литеры по одной приподнимаются и на мгновение мутнеют,
+ * будто испаряются, потом возвращаются чёткими. Волна слева направо,
+ * сдвиг 0.03 с, весь цикл 0.5 с. Едут только `transform` и `opacity`;
+ * мутность — та же тень текста с постоянным радиусом, что и в заголовке.
+ * Ни колец, ни дисков, ни масок: именно они и стоили дорого.
+ */
+function PuffLabel({ text }: { text: string }) {
+  return (
+    <span className="pf">
+      {text.split('').map((c, i) => (
+        <b className="pf__l" key={i} style={{ '--i': i } as React.CSSProperties}>
+          <b className="pf__s">{c === ' ' ? ' ' : c}</b>
+          <b className="pf__f" aria-hidden="true">
+            {c === ' ' ? ' ' : c}
+          </b>
+        </b>
+      ))}
+    </span>
+  )
+}
+
+/**
  * Сцена героя.
  *
  * Секция 260svh, внутри липкая площадка в экран. Развитие по скроллу
@@ -172,17 +196,11 @@ export function Hero() {
             </h1>
             <p className="hero__lead js-in">Термальный комплекс в горах. Открыто {HOURS}.</p>
             <div className="hero__acts">
-              <a className="btn btn--glass js-in" href="#zapis">
-                <i className="btn__fog" aria-hidden="true" />
-                <i className="btn__fog" aria-hidden="true" />
-                <i className="btn__fog" aria-hidden="true" />
-                <span>Записаться</span>
+              <a className="btn btn--puff js-in" href="#zapis" aria-label="Записаться">
+                <PuffLabel text="Записаться" />
               </a>
-              <a className="btn btn--ghost btn--glass js-in" href="#tseny">
-                <i className="btn__fog" aria-hidden="true" />
-                <i className="btn__fog" aria-hidden="true" />
-                <i className="btn__fog" aria-hidden="true" />
-                <span>Смотреть цены</span>
+              <a className="btn btn--ghost btn--puff js-in" href="#tseny" aria-label="Смотреть цены">
+                <PuffLabel text="Смотреть цены" />
               </a>
             </div>
           </div>
