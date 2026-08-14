@@ -19,6 +19,7 @@ const FLAT = [
   { src: 'frost.png', q: 62, w: 720 },
   { src: 'drip.png', q: 78, w: null },
   { src: 'pool-desktop.png', q: 62, w: 1200 },
+  { src: 'fg-desktop.png', q: 70, w: 1600 },
   { src: 'pool-mobile.png', q: 62, w: 700 },
 ]
 

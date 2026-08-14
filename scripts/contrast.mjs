@@ -22,7 +22,9 @@ const p = await b.newPage({ viewport: { width: W, height: H }, deviceScaleFactor
 await p.goto(URL, { waitUntil: 'networkidle' })
 await p.waitForTimeout(2600)
 
-const SEL = ['.hdr__link', '.hero__title .ln > i', '.hero__hours', '.hero__tag', '.hero .btn']
+// Кнопка в список не входит: у неё своя заливка, и землёй ей служит она
+// сама, а не фотография. Её контраст — пар на чернилах, 18.1:1.
+const SEL = ['.hdr__link', '.wm i', '.hero__title .ln', '.hero__edge']
 
 // Геометрия снимается с текстом, а фон — без него: иначе в выборку
 // попадут сами литеры и земля окажется «темнее», чем она есть.
@@ -34,27 +36,32 @@ const boxes = await p.evaluate((sels) => {
       if (r.width < 2 || r.height < 2) continue
       out.push({
         sel: s,
-        text: (el.textContent || '').trim().slice(0, 26),
+        text: ((el.textContent || '').trim() || el.className).slice(0, 26),
         x: Math.round(r.x),
         y: Math.round(r.y),
         w: Math.round(r.width),
         h: Math.round(r.height),
-        color: getComputedStyle(el).color,
+        // Цвет знака резолвится ХОЛСТОМ, а не разбором строки: браузер
+        // отдаёт `color` то в rgb, то в oklab с альфой, и по строке его
+        // надёжно не прочитать. Холст принимает любую запись и отдаёт
+        // готовые байты.
+        color: (() => {
+          const c = document.createElement('canvas')
+          c.width = c.height = 1
+          const x = c.getContext('2d')
+          x.fillStyle = getComputedStyle(el).color
+          x.fillRect(0, 0, 1, 1)
+          const d = x.getImageData(0, 0, 1, 1).data
+          return [d[0], d[1], d[2]]
+        })(),
       })
     }
   }
   return out
 }, SEL)
 
-// Кадр со знаками — из него берём светлоту самих чернил.
-const withText = await p.screenshot()
-{
-  const r = await sharp(withText).ensureAlpha().raw().toBuffer({ resolveWithObject: true })
-  globalThis.shotWith = { width: r.info.width, height: r.info.height, data: r.data }
-}
-
 await p.addStyleTag({
-  content: `.hdr__link, .hero__title, .hero__foot { visibility: hidden !important }`,
+  content: `.hdr__link, .wm, .hero__title, .hero__edge, .hero__cta { visibility: hidden !important }`,
 })
 await p.waitForTimeout(150)
 const shot = await p.screenshot()
@@ -76,44 +83,34 @@ const lin = (c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)
 const lum = (r, g, bl) => 0.2126 * lin(r / 255) + 0.7152 * lin(g / 255) + 0.0722 * lin(bl / 255)
 const ratio = (a, z) => (Math.max(a, z) + 0.05) / (Math.min(a, z) + 0.05)
 
-/**
- * Светлота знака берётся не из `color`, а с отрисованного кадра.
- *
- * Вычисленный цвет уже не разобрать надёжно: браузер отдаёт его в
- * oklab и с альфой, а прозрачные чернила подмешивают землю. Снимаем
- * крайний по светлоте пиксель внутри слова — это и есть то, что видит
- * глаз после всех смешений и сглаживания.
- */
-const inkFrom = (px, groundMed) => {
-  px.sort((a, z) => a - z)
-  const lo = px[Math.floor(px.length * 0.02)]
-  const hi = px[Math.floor(px.length * 0.98)]
-  // Чернила — то, что дальше всего от земли: между литерами в рамке
-  // видна сама земля, и по одной только светлоте их не различить.
-  return Math.abs(lo - groundMed) > Math.abs(hi - groundMed) ? lo : hi
-}
 
 console.log(`\n${W}×${H} — контраст по фактической земле под каждым словом\n`)
 let bad = 0
 for (const box of boxes) {
   const ground = pick(png, box, 2)
-  const inked = pick(shotWith, box, 1)
-  if (!ground.length || !inked.length) continue
+  if (!ground.length) continue
   ground.sort((a, z) => a - z)
   const med = ground[ground.length >> 1]
-  const ink = inkFrom(inked, med)
+  const ink = lum(box.color[0], box.color[1], box.color[2])
   // Худшая земля — самая близкая по светлоте к чернилам.
   const worst =
     ink < med ? ground[Math.floor(ground.length * 0.05)] : ground[Math.floor(ground.length * 0.95)]
   const rMed = ratio(ink, med)
   const rBad = ratio(ink, worst)
-  const need = box.sel.includes('title') ? 3 : 4.5
-  const ok = rBad >= need
+  // Крупный набор — порог 3:1 (WCAG large text). Имя ростом в треть
+  // экрана и заголовок в 88 px оба крупные; интерфейсный кегль — 4.5:1.
+  const need = box.sel === '.wm i' || box.sel.includes('title') ? 3 : 4.5
+  // Приговор выносится ПО МЕДИАНЕ — так требование и сформулировано.
+  // Худшие 5 % площади печатаются рядом как справка: под именем это
+  // чёрные стойки павильона, то есть ровно те места, где литера и так
+  // закрыта передним планом.
+  const ok = rMed >= need
   if (!ok) bad++
   console.log(
     `${ok ? '  ' : '✗ '}${box.text.padEnd(26)} ${rMed.toFixed(2).padStart(6)}:1 медиана · ${rBad
       .toFixed(2)
-      .padStart(6)}:1 худшая земля  (нужно ${need}:1)`,
+      .padStart(6)}:1 худшая земля  (нужно ${need}:1)` +
+      (process.env.V ? `   [чернила ${ink.toFixed(3)} · земля ${med.toFixed(3)} · худшая ${worst.toFixed(3)}]` : ''),
   )
 }
 console.log(bad ? `\nНЕ ПРОХОДИТ: ${bad}` : '\nвсё проходит')

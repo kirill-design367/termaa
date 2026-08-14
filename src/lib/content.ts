@@ -15,7 +15,7 @@ export const HOURS_LINE = '8:00 — 23:00, без выходных'
  * заметно короче первой, а выключка по центру от этого разваливается.
  */
 export const HERO_TITLE = ['ГОРЯЧАЯ ВОДА', 'НА ВЫСОТЕ 1800']
-export const HERO_TAG = 'Термальный комплекс в горах'
+export const HERO_TAG = 'Термальный комплекс в горах, 1800 м'
 
 export const NAV = [
   { id: 'kompleks', label: 'Комплекс' },

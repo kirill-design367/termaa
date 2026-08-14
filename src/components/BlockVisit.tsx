@@ -40,17 +40,13 @@ export function BlockVisit() {
     const q = gsap.utils.selector(el)
     const steps = q<HTMLElement>('.visit__step')
     const tones = q<HTMLElement>('.visit__tone')
-    const gauge = q<HTMLElement>('.visit__gauge b')[0]
     const fog = q<HTMLElement>('.visit__fog')
     const venik = q<HTMLElement>('.venik')[0]
     const drops = q<HTMLElement>('.dropwrap')
 
     // Шаги разворачиваются в список средствами CSS — см. @media
-    // (prefers-reduced-motion). Здесь остаётся только показание термометра.
-    if (reduced()) {
-      gauge.textContent = '90'
-      return
-    }
+    // (prefers-reduced-motion).
+    if (reduced()) return
 
     const ctx = gsap.context(() => {
       // Капли идут своим циклом, независимо от скролла.
@@ -76,8 +72,6 @@ export function BlockVisit() {
       gsap.set(tones.slice(1), { autoAlpha: 0 })
       gsap.set(drops, { autoAlpha: 0 })
 
-      const t = { v: STEPS[0].temp }
-      let shown = String(STEPS[0].temp)
 
       const tl = gsap.timeline({
         scrollTrigger: {
@@ -93,25 +87,7 @@ export function BlockVisit() {
       // Температура: растёт до 90, затем резко падает до 4 на купели.
       for (let i = 1; i < STEPS.length; i++) {
         const at = i - 1
-        tl.to(
-          t,
-          {
-            v: STEPS[i].temp,
-            duration: i === STEPS.length - 1 ? 0.32 : 0.8,
-            ease: i === STEPS.length - 1 ? 'power3.in' : 'none',
-            onUpdate: () => {
-              // Перерисовываем цифру только когда она сменилась:
-              // текст в 9rem — это раскладка и заливка, а не композитинг.
-              const v = String(Math.round(t.v))
-              if (v !== shown) {
-                shown = v
-                gauge.textContent = v
-              }
-            },
-          },
-          at + (i === STEPS.length - 1 ? 0.34 : 0.1),
-        )
-          .to(steps[i - 1], { autoAlpha: 0, yPercent: -8, duration: 0.5, ease: 'power2.in' }, at + 0.18)
+        tl.to(steps[i - 1], { autoAlpha: 0, yPercent: -8, duration: 0.5, ease: 'power2.in' }, at + 0.18)
           .fromTo(
             steps[i],
             { autoAlpha: 0, yPercent: 8 },
@@ -177,10 +153,6 @@ export function BlockVisit() {
         ))}
       </div>
 
-      <p className="visit__gauge" aria-hidden="true">
-        <b>20</b>
-        <i>градусов</i>
-      </p>
     </section>
   )
 }

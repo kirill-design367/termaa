@@ -16,6 +16,7 @@ export function pairVars(pair: Pair): CSSProperties {
     // берётся из текстовой гарнитуры, как и должно.
     '--font-text': `'Rub', '${t.family}', system-ui, sans-serif`,
     '--wm-cap': d.capR,
+    '--wm-asc': d.ascR,
     '--wm-sum': wordmarkSum(d),
     '--wm-drop': wordmarkDrop(d),
     '--display-w': pair.displayWeight,

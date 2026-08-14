@@ -161,8 +161,8 @@ export function Water() {
     if (!box) return
     const stage = box.parentElement as HTMLElement | null
     const img = stage?.querySelector('.hero__bg img') as HTMLImageElement | null
-    const title = stage?.querySelector('.hero__title') as HTMLElement | null
-    if (!stage || !img || !title) return
+    const wm = stage?.querySelector('.wm') as HTMLElement | null
+    if (!stage || !img || !wm) return
 
     const still = reduced()
     let cleanup = () => {}
@@ -276,12 +276,18 @@ export function Water() {
       const rctx = refl.getContext('2d')!
 
       /**
-       * Зеркальная копия заголовка.
+       * Зеркальная копия имени.
        *
-       * Рисуется по фактической геометрии строк из разметки — начало
-       * строки, базовая линия и трекинг берутся с живых элементов, а не
-       * пересчитываются заново. Поэтому отражение не может разъехаться
-       * с самим заголовком ни при каком кегле.
+       * Слово стоит В ЧАШЕ бассейна, поэтому зеркало проходит по его
+       * БАЗОВОЙ ЛИНИИ, а не по дальней кромке воды: отражается предмет
+       * от той поверхности, в которой он стоит.
+       *
+       * Геометрия берётся с живых литер — начало, базовая линия и кегль
+       * читаются с разметки, а не пересчитываются заново. Разъехаться с
+       * именем отражение не может ни при каком кегле.
+       *
+       * Сжатие по вертикали — перспектива: плоскость воды уходит от
+       * камеры, и отражение обязано укорачиваться.
        */
       const drawRefl = (dpr: number) => {
         refl.width = Math.max(1, Math.round(rect.w * dpr))
@@ -289,31 +295,38 @@ export function Water() {
         rctx.setTransform(dpr, 0, 0, dpr, 0, 0)
         rctx.clearRect(0, 0, rect.w, rect.h)
 
-        const wl = toStageY(cv, mob() ? WATER_LINE.mobile : WATER_LINE.desktop) - rect.y
-        const cs = getComputedStyle(title)
-        rctx.fillStyle = cs.color
+        // Мерятся ЛИТЕРНЫЕ БОКСЫ, а не сами литеры: на входе литера едет
+        // снизу, и её прямоугольник в этот момент лежит на 120 % ниже
+        // конечного места. Отражение, снятое с него, уезжало за кромку
+        // холста — то есть его просто не было видно.
+        const letters = wm.querySelectorAll<HTMLElement>('i')
+        if (!letters.length) return
+        const sr = stage.getBoundingClientRect()
+        const cs = getComputedStyle(wm)
+        // Чернила отражения — своя переменная: на десктопе вода под
+        // словом светлая и отражение тёмное, на мобильной вода тёмная
+        // и тёмное отражение в ней невидимо физически. Значение читается
+        // с узла, а не из переменной: `getPropertyValue` отдаёт
+        // неразвёрнутый `var(--ink)`, а не цвет.
+        const inkEl = wm.querySelector('.wm__ink')
+        rctx.fillStyle = inkEl ? getComputedStyle(inkEl).color : cs.color
+        rctx.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`
         rctx.textBaseline = 'alphabetic'
 
-        rctx.save()
-        rctx.translate(0, wl)
-        // Перспектива: плоскость уходит от камеры, отражение короче
-        // оригинала. Коэффициент снят с наклона самой воды в кадре.
-        rctx.scale(1, -0.62)
+        const m0 = rctx.measureText('H')
+        const asc = m0.fontBoundingBoxAscent || 0
+        const desc = m0.fontBoundingBoxDescent || 0
 
-        const lines = title.querySelectorAll<HTMLElement>('.ln > i')
-        const sr = stage.getBoundingClientRect()
-        lines.forEach((el) => {
+        // Базовая линия слова в координатах холста.
+        const first = letters[0].getBoundingClientRect()
+        const base = first.top - sr.top - rect.y + (first.height - (asc + desc)) / 2 + asc
+
+        rctx.save()
+        rctx.translate(0, base)
+        rctx.scale(1, -0.62)
+        letters.forEach((el) => {
           const r = el.getBoundingClientRect()
-          const st = getComputedStyle(el)
-          rctx.font = `${st.fontWeight} ${st.fontSize} ${st.fontFamily}`
-          if ('letterSpacing' in rctx) rctx.letterSpacing = st.letterSpacing
-          const m = rctx.measureText(el.textContent || '')
-          const asc = m.fontBoundingBoxAscent || 0
-          const desc = m.fontBoundingBoxDescent || 0
-          const boxH = r.height
-          // Полулидинг: базовая линия внутри строчного бокса.
-          const base = r.top - sr.top - rect.y + (boxH - (asc + desc)) / 2 + asc
-          rctx.fillText(el.textContent || '', r.left - sr.left - rect.x, base - wl)
+          rctx.fillText(el.textContent || '', r.left - sr.left - rect.x, 0)
         })
         rctx.restore()
 
@@ -394,10 +407,9 @@ export function Water() {
         }
         if (!t0) t0 = now
         const t = frozen ?? (now - t0) / 1000
-        // Отражение проявляется следом за строками: они доезжают к 1.02 с,
-        // отражение набирает силу с 1.02 по 1.38 — до того, как придут
-        // нижняя строка и навигация.
-        if (refA < 1) refA = Math.min(1, (t - 1.02) / 0.36)
+        // Имя собирается к 1.09 с. Отражение проступает следом, с
+        // задержкой 0.3 от того момента, как встала первая литера.
+        if (refA < 1) refA = Math.min(1, (t - 1.15) / 0.3)
         while (drops.length && t - drops[0].t > DROP_LIFE) drops.shift()
         draw(t)
         raf = requestAnimationFrame(tick)
@@ -422,6 +434,11 @@ export function Water() {
 
       ro = new ResizeObserver(layout)
       ro.observe(stage)
+      // Кегль имени ставит JS уже после первой раскладки и ещё раз по
+      // готовности гарнитуры. Площадка при этом не меняется, поэтому
+      // наблюдать надо и за самим словом — иначе отражение останется
+      // от старого кегля.
+      ro.observe(wm)
 
       if (!still) {
         stage.addEventListener('pointermove', onPoint, { passive: true })
@@ -446,6 +463,30 @@ export function Water() {
             return { ...q, in: inPoly(poly, q.u, q.v) }
           },
           state: () => ({ ready, vis, t0, raf, n: drops.length }),
+          reflStat: () => {
+            const d = rctx.getImageData(0, 0, refl.width, refl.height).data
+            let n = 0
+            let minY = 1e9
+            let maxY = -1
+            for (let y = 0; y < refl.height; y++)
+              for (let x = 0; x < refl.width; x++) {
+                if (d[(y * refl.width + x) * 4 + 3] > 8) {
+                  n++
+                  if (y < minY) minY = y
+                  if (y > maxY) maxY = y
+                }
+              }
+            return { size: [refl.width, refl.height], painted: n, minY, maxY, rect }
+          },
+          setRefl: (v: number) => {
+            refA = v
+          },
+          clearRefl: () => {
+            rctx.clearRect(0, 0, rect.w, rect.h)
+            g.activeTexture(g.TEXTURE2)
+            g.bindTexture(g.TEXTURE_2D, texRefl)
+            g.texImage2D(g.TEXTURE_2D, 0, g.RGBA, g.RGBA, g.UNSIGNED_BYTE, refl)
+          },
           freeze: (v: number | null) => {
             frozen = v
             refA = 1
@@ -485,11 +526,6 @@ export function Water() {
   }, [])
 
   return <div className="water" ref={host} aria-hidden="true" />
-}
-
-/** Экранная Y линии, заданной долей кадра. */
-function toStageY(c: Cover, v: number) {
-  return c.oy + v * c.dh
 }
 
 /** Те же плоскостные координаты, что в шейдере, — для попадания курсора. */
