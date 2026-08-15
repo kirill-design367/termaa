@@ -1750,6 +1750,23 @@ img {
   min-height: 520px;
 }
 
+/* Витрина рисуется сервером и без единого скрипта, а в бою композицию
+   раскладывает JS. Поэтому здесь те же величины, выраженные в CSS: они
+   не приблизительные, а ровно те же формулы. `--wm-sum` (сумма ширин
+   литер в эмах) и `--wm-cap` приходят из `pairVars`, поэтому кегль
+   остаётся верным при любой паре шрифтов — ради чего витрина и есть. */
+.still .hero__stage {
+  --wm-size: calc(94vw / var(--wm-sum));
+  --wm-base: 61.8svh;
+  --phi-x: 61.8vw;
+  --phi-y: 61.8svh;
+}
+
+.still .hero__title {
+  font-size: calc(94vw / var(--wm-sum) / 5.5);
+  bottom: calc(38.2svh + var(--wm-size) * (var(--wm-cap) + 0.09));
+}
+
 .still__tag {
   position: absolute;
   z-index: 6;
@@ -1760,7 +1777,9 @@ img {
   font-size: var(--t-cap);
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: color-mix(in oklab, var(--steam) 70%, transparent);
+  /* Подпись витрины лежит на светлой воде: паром она не читалась.
+     Чернила под землю — то же правило, что и во всём кадре. */
+  color: var(--ink);
 }
 
 .spec__body {

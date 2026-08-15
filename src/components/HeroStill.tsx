@@ -1,4 +1,5 @@
 import { A } from '@/lib/asset'
+import { FG_MASK } from '@/lib/hero'
 import { BRAND, HERO_TAG, HERO_TITLE, HOURS_LINE, NAV } from '@/lib/content'
 import { METRICS, type Pair } from '@/lib/fonts'
 import { pairVars } from '@/lib/pairStyle'
@@ -39,19 +40,42 @@ export function HeroStill({ pair }: { pair: Pair }) {
           </div>
         </header>
 
+        {/* Имя. Главный объект кадра — ради него витрина и существует. */}
+        <p className="wm" aria-hidden="true">
+          {BRAND.split('').map((c, i) => (
+            <i key={i}>
+              <span>{c}</span>
+            </i>
+          ))}
+        </p>
+
+        {/* Передний план: та же фотография под маской крыши и стоек.
+            Без него витрина показывала бы не ту композицию, что в бою. */}
+        <div
+          className="hero__fg"
+          aria-hidden="true"
+          style={{
+            WebkitMaskImage: `url(${A(FG_MASK)})`,
+            maskImage: `url(${A(FG_MASK)})`,
+          }}
+        >
+          <picture>
+            <source type="image/avif" srcSet={A('/img/hero-desktop-2400.avif')} />
+            <img src={A('/img/hero-desktop-1600.webp')} alt="" width={2752} height={1536} />
+          </picture>
+        </div>
+
         <h1 className="hero__title">
           {HERO_TITLE.map((line) => (
             <span className="ln" key={line}>
-              <i>{line}</i>
+              {line}
             </span>
           ))}
         </h1>
 
-        <div className="hero__foot">
-          <span className="hero__hours">{HOURS_LINE}</span>
-          <span className="btn btn--hero">Записаться</span>
-          <span className="hero__tag">{HERO_TAG}</span>
-        </div>
+        <span className="btn btn--hero hero__cta">Записаться</span>
+        <span className="hero__edge hero__edge--l">{HOURS_LINE}</span>
+        <span className="hero__edge hero__edge--r">{HERO_TAG}</span>
       </div>
 
       <p className="still__tag">
