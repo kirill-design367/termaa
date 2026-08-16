@@ -22,7 +22,7 @@ await p.evaluate(() => {
 console.log('длительность входа', await p.evaluate(() => window.__intro.duration()), 'с')
 
 const files = []
-for (const t of [0.45, 1.1, 1.8]) {
+for (const t of [0.3, 1.15, 1.8]) {
   await p.evaluate((v) => {
     window.__intro.seek(v)
   }, t)
@@ -38,6 +38,6 @@ await sharp({
   create: { width: m.width, height: m.height * 3 + 12, channels: 3, background: '#16130f' },
 })
   .composite(files.map((f, i) => ({ input: f, top: i * (m.height + 6), left: 0 })))
-  .toFile(`${OUT}/8-intro.png`)
+  .toFile(`${OUT}/6-intro.png`)
 console.log('полоса собрана')
 await b.close()

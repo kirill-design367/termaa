@@ -14,6 +14,7 @@ import {
   TITLE_RATIO,
   TITLE_RATIO_M,
   WM_BASE,
+  WM_BASE_M,
   WM_PAD,
 } from '@/lib/hero'
 
@@ -88,18 +89,43 @@ export function Hero() {
       const sum = ctx.measureText(BRAND).width / 100
       const size = (w * (1 - WM_PAD * 2)) / sum
 
+      // Мобильная — отдельная композиция, и базовая линия имени там своя:
+      // на узком кадре золотая горизонталь приходится на снег и пар.
+      const mob = window.matchMedia('(max-width: 860px)').matches
+      const base = mob ? WM_BASE_M : WM_BASE
+
       stage.style.setProperty('--wm-size', `${size.toFixed(2)}px`)
-      stage.style.setProperty('--wm-base', `${Math.round(h * WM_BASE)}px`)
+      stage.style.setProperty('--wm-base', `${Math.round(h * base)}px`)
       stage.style.setProperty('--phi-x', `${Math.round(w * PHI)}px`)
       stage.style.setProperty('--phi-y', `${Math.round(h * PHI)}px`)
 
-      // Заголовок мельче имени и стоит над ним.
-      const mob = window.matchMedia('(max-width: 860px)').matches
-      const ts = size * (mob ? TITLE_RATIO_M : TITLE_RATIO)
-      title.style.fontSize = `${ts.toFixed(2)}px`
+      /* Заголовок стоит между шапкой и именем, и обе границы жёсткие.
+         Поэтому он не «ставится сверху», а ВПИСЫВАЕТСЯ в просвет:
+         сначала считается сам просвет, потом кегль. На прошлой сборке
+         заголовок задавался кеглем и на низком экране наезжал на первый
+         пункт меню — теперь этого не может случиться по построению. */
       const cap = parseFloat(cs.getPropertyValue('--wm-cap')) || 0.723
-      const gap = Math.max(size * TITLE_GAP, TITLE_GAP_MIN)
-      title.style.bottom = `${Math.round(h - (h * WM_BASE - size * cap) + gap)}px`
+      // Верхняя граница — НИЖНЯЯ КРОМКА МЕНЮ, а не высота шапки: между
+      // ними лежит воздух, и заголовок имеет на него право. Двадцать
+      // семь пикселей, которые он от этого выигрывает, стоят четверти
+      // ступени контраста: небо тем темнее, чем выше.
+      const nav = document.querySelector('.hdr__nav')
+      const headH =
+        (nav?.getBoundingClientRect().bottom ??
+          parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-h'))) ||
+        69
+      const capTop = h * base - size * cap
+      const top = headH + 10
+      const room = capTop - Math.max(size * TITLE_GAP, TITLE_GAP_MIN) - top
+      const lines = title.querySelectorAll('.ln').length || 1
+      const lh = parseFloat(getComputedStyle(title).lineHeight) / (parseFloat(cs.fontSize) || 1)
+      const ts = Math.min(
+        size * (mob ? TITLE_RATIO_M : TITLE_RATIO),
+        room / (lines * (isFinite(lh) && lh > 0 ? lh : 1.02)),
+      )
+      title.style.fontSize = `${ts.toFixed(2)}px`
+      title.style.top = `${Math.round(top)}px`
+      title.style.bottom = 'auto'
     }
 
     fit()
@@ -232,9 +258,12 @@ export function Hero() {
         </div>
 
         <h1 className="hero__title">
-          {HERO_TITLE.map((line) => (
+          {HERO_TITLE.map((line, i) => (
             <span className="ln" key={line}>
-              {line}
+              {/* Пробел в конце строки — не украшение: без него
+                  текстовое содержимое заголовка склеивается в
+                  «ГОРЯЧАЯ ВОДАНА ВЫСОТЕ1800». */}
+              {i < HERO_TITLE.length - 1 ? `${line} ` : line}
             </span>
           ))}
         </h1>
