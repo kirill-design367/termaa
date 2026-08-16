@@ -11,3 +11,6 @@ assets-src/fonts/
 
 # Кэш питона
 scripts/__pycache__/
+
+# Промежуточные PNG со сборки ассетов: в выдачу уходят AVIF и WebP.
+public/img/*.png

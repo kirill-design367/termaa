@@ -15,7 +15,7 @@ const H = +(process.env.H || 1080)
 
 const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' })
 const p = await b.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: 1 })
-await p.goto(`${URL}?water=off`, { waitUntil: 'networkidle' })
+await p.goto(`${URL}`, { waitUntil: 'networkidle' })
 await p.waitForTimeout(1800)
 const shot = await p.screenshot()
 
@@ -28,7 +28,7 @@ const g = await p.evaluate(() => {
   }
   const cs = getComputedStyle(document.querySelector('.hero__stage'))
   const n = (k) => parseFloat(cs.getPropertyValue(k))
-  const wm = [...document.querySelectorAll('.wm i')].filter((e) => e.textContent.trim())
+  const wm = [...document.querySelectorAll('.wm--main i')].filter((e) => e.textContent.trim())
   const f = wm[0].getBoundingClientRect()
   const l = wm[wm.length - 1].getBoundingClientRect()
   return {
@@ -39,8 +39,7 @@ const g = await p.evaluate(() => {
     cta: r('.hero__cta'),
     title: r('.hero__title'),
     nav: r('.hdr__nav'),
-    edgeL: r('.hero__edge--l'),
-    edgeR: r('.hero__edge--r'),
+    foot: r('.hero__foot'),
   }
 })
 await b.close()
@@ -60,16 +59,13 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}">
   <circle cx="${g.phiX}" cy="${g.phiY}" r="11" fill="none" stroke="#ff8a00" stroke-width="3"/>
   <text x="${g.phiX + 18}" y="26" fill="#ff8a00" font-family="monospace" font-size="19">вертикаль φ — 0.618 ширины (${Math.round(g.phiX)} px)</text>
   <text x="14" y="${g.phiY - 12}" fill="#ff8a00" font-family="monospace" font-size="19">горизонталь φ — 0.618 высоты (${Math.round(g.phiY)} px) = базовая линия TERMA</text>
-  <text x="${g.phiX + 18}" y="${g.phiY + 30}" fill="#ff8a00" font-family="monospace" font-size="19">пересечение — угол кнопки</text>
   <line x1="${W * 0.03}" y1="0" x2="${W * 0.03}" y2="${H}" stroke="#7fd4ff" stroke-width="1" stroke-dasharray="4 8"/>
   <line x1="${W * 0.97}" y1="0" x2="${W * 0.97}" y2="${H}" stroke="#7fd4ff" stroke-width="1" stroke-dasharray="4 8"/>
   <text x="${W * 0.03 + 10}" y="${H * 0.86}" fill="#7fd4ff" font-family="monospace" font-size="17">поле 3 %</text>
-  ${box(g.nav, 'меню — в тёмной зоне, до 0.38 ширины')}
-  ${box(g.title, 'заголовок — левая половина, кегль имени ÷ 6', true)}
-  ${box(g.wm, 'TERMA — во всю ширину, литера 32.5 % высоты')}
-  ${box(g.cta, 'кнопка')}
-  ${box(g.edgeL, 'режим')}
-  ${box(g.edgeR, 'адрес')}
+  ${box(g.nav, 'меню — пилюлями, группой слева', true)}
+  ${box(g.wm, 'TERMA — литера 22 % высоты, базовая линия на φ')}
+  ${box(g.title, 'заголовок — под именем, слева')}
+  ${box(g.foot, 'режим, адрес и кнопка — одним блоком')}
 </svg>`
 
 await sharp(shot)

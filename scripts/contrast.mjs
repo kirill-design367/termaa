@@ -24,7 +24,7 @@ await p.waitForTimeout(2600)
 
 // Кнопка в список не входит: у неё своя заливка, и землёй ей служит она
 // сама, а не фотография. Её контраст — пар на чернилах, 18.1:1.
-const SEL = ['.hdr__link', '.wm i', '.hero__title .ln', '.hero__edge']
+const SEL = ['.hdr__link', '.wm--main i', '.hero__title .ln', '.hero__edge']
 
 // Геометрия снимается с текстом, а фон — без него: иначе в выборку
 // попадут сами литеры и земля окажется «темнее», чем она есть.
@@ -61,7 +61,7 @@ const boxes = await p.evaluate((sels) => {
 }, SEL)
 
 await p.addStyleTag({
-  content: `.hdr__link, .wm, .hero__title, .hero__edge, .hero__cta { visibility: hidden !important }`,
+  content: `.hdr__link, .wm, .hero__title, .hero__foot { visibility: hidden !important }`,
 })
 await p.waitForTimeout(150)
 const shot = await p.screenshot()
@@ -99,7 +99,7 @@ for (const box of boxes) {
   const rBad = ratio(ink, worst)
   // Крупный набор — порог 3:1 (WCAG large text). Имя ростом в треть
   // экрана и заголовок в 88 px оба крупные; интерфейсный кегль — 4.5:1.
-  const need = box.sel === '.wm i' || box.sel.includes('title') ? 3 : 4.5
+  const need = box.sel === '.wm--main i' || box.sel.includes('title') ? 3 : 4.5
   // Приговор выносится ПО МЕДИАНЕ — так требование и сформулировано.
   // Худшие 5 % площади печатаются рядом как справка: под именем это
   // чёрные стойки павильона, то есть ровно те места, где литера и так
